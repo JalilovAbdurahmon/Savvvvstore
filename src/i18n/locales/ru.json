@@ -1,0 +1,115 @@
+{
+  "common": {
+    "loading": "Загрузка..."
+  },
+  "nav": {
+    "adminPanel": "Админ-панель",
+    "overview": "Обзор",
+    "addProduct": "Добавить товар",
+    "products": "Товары",
+    "pendingOrders": "Новые заказы",
+    "orderHistory": "История заказов",
+    "logout": "Выйти"
+  },
+  "lang": {
+    "uz": "O'zbekcha",
+    "ru": "Русский"
+  },
+  "login": {
+    "adminPanel": "Админ-панель",
+    "username": "Имя пользователя",
+    "password": "Пароль",
+    "submit": "Войти",
+    "loading": "Загрузка...",
+    "errorDefault": "Ошибка при входе"
+  },
+  "home": {
+    "title": "Обзор",
+    "subtitle": "Статистика вашего магазина",
+    "loading": "Загрузка...",
+    "errorDefault": "Не удалось загрузить данные",
+    "totalRevenue": "Общий доход",
+    "totalSold": "Продано товаров",
+    "completedOrders": "Выполненные заказы",
+    "pendingOrders": "Заказы в ожидании",
+    "totalProducts": "Всего товаров",
+    "activeProducts": "Активные товары",
+    "last7Days": "Последние 7 дней",
+    "topProducts": "Самые продаваемые товары",
+    "noSales": "Продаж пока нет",
+    "currency": "сум",
+    "pcs": "шт"
+  },
+  "addProduct": {
+    "title": "Добавить товар",
+    "subtitle": "Введите данные нового товара",
+    "name": "Название",
+    "namePlaceholder": "Например: Классическая рубашка",
+    "price": "Цена",
+    "pricePlaceholder": "0",
+    "sizes": "Размеры (через запятую)",
+    "sizesPlaceholder": "S, M, L, XL",
+    "description": "Описание",
+    "descriptionPlaceholder": "Краткое описание товара",
+    "image": "Изображение",
+    "chooseImage": "Выбрать изображение",
+    "loading": "Загрузка...",
+    "submit": "Добавить товар",
+    "errorNoImage": "Пожалуйста, выберите изображение",
+    "errorNoSize": "Укажите хотя бы один размер",
+    "successMsg": "Товар успешно добавлен",
+    "errorDefault": "Ошибка при добавлении товара"
+  },
+  "productList": {
+    "title": "Товары",
+    "subtitle": "{{count}} товар(ов)",
+    "empty": "Товаров пока нет.",
+    "hidden": "Скрыт",
+    "currency": "сум",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "errorLoad": "Не удалось загрузить товары",
+    "errorDelete": "Ошибка при удалении",
+    "confirmDelete": "Подтвердите удаление товара",
+    "modal": {
+      "title": "Редактирование товара",
+      "name": "Название",
+      "price": "Цена",
+      "sizes": "Размеры",
+      "description": "Описание",
+      "newImage": "Новое изображение (необязательно)",
+      "visible": "Видно покупателям",
+      "save": "Сохранить",
+      "saving": "Сохранение...",
+      "cancel": "Отмена",
+      "errorDefault": "Ошибка при сохранении"
+    }
+  },
+  "pendingOrders": {
+    "title": "Новые заказы",
+    "subtitle": "{{count}} заказ(ов) в ожидании",
+    "customer": "Клиент",
+    "pending": "В ожидании",
+    "cancel": "Отменить",
+    "complete": "Выполнено ✓",
+    "empty": "Новых заказов пока нет.",
+    "currency": "сум",
+    "errorLoad": "Не удалось загрузить",
+    "errorAction": "Не удалось выполнить действие",
+    "confirmCancel": "Подтвердите отмену заказа"
+  },
+  "orderHistory": {
+    "title": "История заказов",
+    "subtitle": "{{count}} завершённых заказов",
+    "empty": "История пока пуста.",
+    "customer": "Клиент",
+    "products": "Товары",
+    "amount": "Сумма",
+    "status": "Статус",
+    "date": "Дата",
+    "completed": "Выполнено",
+    "cancelled": "Отменено",
+    "currency": "сум",
+    "errorLoad": "Не удалось загрузить"
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "common": {
+    "loading": "Yuklanmoqda..."
+  },
+  "nav": {
+    "adminPanel": "Admin panel",
+    "overview": "Umumiy ko'rinish",
+    "addProduct": "Mahsulot qo'shish",
+    "products": "Mahsulotlar",
+    "pendingOrders": "Yangi zakazlar",
+    "orderHistory": "Zakazlar tarixi",
+    "logout": "Chiqish"
+  },
+  "lang": {
+    "uz": "O'zbekcha",
+    "ru": "Русский"
+  },
+  "login": {
+    "adminPanel": "Admin panel",
+    "username": "Foydalanuvchi nomi",
+    "password": "Parol",
+    "submit": "Kirish",
+    "loading": "Yuklanmoqda...",
+    "errorDefault": "Kirishda xatolik yuz berdi"
+  },
+  "home": {
+    "title": "Umumiy ko'rinish",
+    "subtitle": "Do'koningiz statistikasi",
+    "loading": "Yuklanmoqda...",
+    "errorDefault": "Ma'lumotlarni yuklab bo'lmadi",
+    "totalRevenue": "Jami daromad",
+    "totalSold": "Sotilgan mahsulotlar",
+    "completedOrders": "Bajarilgan buyurtmalar",
+    "pendingOrders": "Kutilayotgan buyurtmalar",
+    "totalProducts": "Jami mahsulotlar",
+    "activeProducts": "Faol mahsulotlar",
+    "last7Days": "So'nggi 7 kun",
+    "topProducts": "Eng ko'p sotilgan mahsulotlar",
+    "noSales": "Hozircha sotuvlar yo'q",
+    "currency": "so'm",
+    "pcs": "dona"
+  },
+  "addProduct": {
+    "title": "Mahsulot qo'shish",
+    "subtitle": "Yangi mahsulot ma'lumotlarini kiriting",
+    "name": "Nomi",
+    "namePlaceholder": "Masalan: Klassik ko'ylak",
+    "price": "Narxi",
+    "pricePlaceholder": "0",
+    "sizes": "O'lchamlar (vergul bilan)",
+    "sizesPlaceholder": "S, M, L, XL",
+    "description": "Tavsif",
+    "descriptionPlaceholder": "Mahsulot haqida qisqacha ma'lumot",
+    "image": "Rasm",
+    "chooseImage": "Rasm tanlash",
+    "loading": "Yuklanmoqda...",
+    "submit": "Mahsulot qo'shish",
+    "errorNoImage": "Iltimos, rasm tanlang",
+    "errorNoSize": "Kamida bitta o'lcham kiriting",
+    "successMsg": "Mahsulot muvaffaqiyatli qo'shildi",
+    "errorDefault": "Mahsulot qo'shishda xatolik yuz berdi"
+  },
+  "productList": {
+    "title": "Mahsulotlar",
+    "subtitle": "{{count}} ta mahsulot",
+    "empty": "Hozircha mahsulotlar yo'q.",
+    "hidden": "Yashirilgan",
+    "currency": "so'm",
+    "edit": "Tahrirlash",
+    "delete": "O'chirish",
+    "errorLoad": "Mahsulotlarni yuklab bo'lmadi",
+    "errorDelete": "O'chirishda xatolik yuz berdi",
+    "confirmDelete": "Mahsulotni o'chirishni tasdiqlaysizmi?",
+    "modal": {
+      "title": "Mahsulotni tahrirlash",
+      "name": "Nomi",
+      "price": "Narxi",
+      "sizes": "O'lchamlar",
+      "description": "Tavsif",
+      "newImage": "Yangi rasm (ixtiyoriy)",
+      "visible": "Mijozlarga ko'rinadi",
+      "save": "Saqlash",
+      "saving": "Saqlanmoqda...",
+      "cancel": "Bekor qilish",
+      "errorDefault": "Saqlashda xatolik yuz berdi"
+    }
+  },
+  "pendingOrders": {
+    "title": "Yangi zakazlar",
+    "subtitle": "{{count}} ta kutilayotgan buyurtma",
+    "customer": "Mijoz",
+    "pending": "Kutilmoqda",
+    "cancel": "Bekor qilish",
+    "complete": "Bajarildi ✓",
+    "empty": "Hozircha yangi zakazlar yo'q.",
+    "currency": "so'm",
+    "errorLoad": "Yuklab bo'lmadi",
+    "errorAction": "Amalni bajarib bo'lmadi",
+    "confirmCancel": "Zakazni bekor qilishni tasdiqlaysizmi?"
+  },
+  "orderHistory": {
+    "title": "Zakazlar tarixi",
+    "subtitle": "{{count}} ta yakunlangan buyurtma",
+    "empty": "Hali tarix bo'sh.",
+    "customer": "Mijoz",
+    "products": "Mahsulotlar",
+    "amount": "Summa",
+    "status": "Holat",
+    "date": "Sana",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor qilindi",
+    "currency": "so'm",
+    "errorLoad": "Yuklab bo'lmadi"
+  }
+}
