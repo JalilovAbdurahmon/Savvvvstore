@@ -108,39 +108,37 @@ const EditModal = ({ product, onClose, onSaved }) => {
             <label className="tag-label block mb-1.5">{t("productList.modal.name")}</label>
             <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.price")}</label>
-              <input
-                type="number"
-                className="input-field"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
-              <div className="flex flex-wrap gap-2">
-                {SIZE_ORDER.map((size) => {
-                  const active = sizes.includes(size);
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => toggleSize(size)}
-                      aria-pressed={active}
-                      className={`w-12 h-10 rounded-tag border text-sm font-medium transition-colors ${
-                        active
-                          ? "bg-terracotta text-white border-terracotta"
-                          : "bg-white text-charcoal border-sand hover:border-terracotta/50"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  );
-                })}
-              </div>
+          <div>
+            <label className="tag-label block mb-1.5">{t("productList.modal.price")}</label>
+            <input
+              type="number"
+              className="input-field"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
+            <div className="flex gap-2">
+              {SIZE_ORDER.map((size) => {
+                const active = sizes.includes(size);
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => toggleSize(size)}
+                    aria-pressed={active}
+                    className={`flex-1 h-11 rounded-tag border text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-terracotta text-white border-terracotta"
+                        : "bg-white text-charcoal border-sand hover:border-terracotta/50"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div>
