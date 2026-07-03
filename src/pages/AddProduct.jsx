@@ -16,10 +16,13 @@ const TOAST_STYLE = {
   },
 };
 
+// Available sizes — o'zgartirish kerak bo'lsa shu ro'yxatni tahrirlang
+const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
+
 const AddProduct = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [sizes, setSizes] = useState("");
+  const [sizes, setSizes] = useState([]); // endi array: ["S", "M", ...]
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -51,6 +54,12 @@ const AddProduct = () => {
 
   const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
 
+  const toggleSize = (size) => {
+    setSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -62,7 +71,7 @@ const AddProduct = () => {
   const resetForm = () => {
     setName("");
     setPrice("");
-    setSizes("");
+    setSizes([]);
     setDescription("");
     setImage(null);
     setPreview(null);
@@ -87,12 +96,7 @@ const AddProduct = () => {
       return;
     }
 
-    const sizeList = sizes
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    if (sizeList.length === 0) {
+    if (sizes.length === 0) {
       const msg = t("addProduct.errorNoSize");
       setError(msg);
       toast.error(msg, TOAST_STYLE);
@@ -103,7 +107,7 @@ const AddProduct = () => {
     formData.append("name", name);
     formData.append("price", price);
     formData.append("category", category);
-    formData.append("sizes", JSON.stringify(sizeList));
+    formData.append("sizes", JSON.stringify(sizes));
     formData.append("description", description);
     formData.append("image", image);
 
@@ -187,14 +191,26 @@ const AddProduct = () => {
             <label className="tag-label block mb-2">
               {t("addProduct.sizes")}
             </label>
-            <input
-              type="text"
-              className="input-field"
-              value={sizes}
-              onChange={(e) => setSizes(e.target.value)}
-              placeholder={t("addProduct.sizesPlaceholder")}
-              required
-            />
+            <div className="flex flex-wrap gap-2">
+              {AVAILABLE_SIZES.map((size) => {
+                const active = sizes.includes(size);
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => toggleSize(size)}
+                    aria-pressed={active}
+                    className={`w-14 h-11 rounded-tag border text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-terracotta text-white border-terracotta"
+                        : "bg-white text-charcoal border-sand hover:border-terracotta/50"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div>
