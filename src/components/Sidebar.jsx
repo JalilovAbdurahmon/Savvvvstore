@@ -7,7 +7,7 @@ import api from "../api/axios.js";
 
 const PENDING_ORDERS_PATH = "/orders/pending";
 const SEEN_COUNT_KEY = "pendingOrdersSeenCount";
-const POLL_INTERVAL_MS = 15000;
+const POLL_INTERVAL_MS = 3000;
 
 const Sidebar = () => {
   const { admin, logout } = useAuth();
@@ -48,7 +48,21 @@ const Sidebar = () => {
   useEffect(() => {
     checkPendingOrders();
     const interval = setInterval(checkPendingOrders, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+
+    // Re-check immediately when the tab/window regains focus,
+    // so you don't have to wait for the next poll tick
+    const handleFocus = () => checkPendingOrders();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") checkPendingOrders();
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [checkPendingOrders]);
 
   const handleLogout = () => {
