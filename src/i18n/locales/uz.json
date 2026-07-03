@@ -121,7 +121,10 @@
     "cancelled": "Bekor qilindi",
     "currency": "so'm",
     "errorLoad": "Yuklab bo'lmadi",
-    "confirmDelete": "Bu buyurtmani o'chirmoqchimisiz?",
+    "confirmDeleteTitle": "Zakazni o'chirasizmi?",
+    "confirmDeleteYes": "O'chirish",
+    "confirmDeleteCancel": "Bekor qilish",
+    "deleteSuccess": "Zakaz muvaffaqiyatli o'chirildi",
     "errorDelete": "O'chirib bo'lmadi",
     "pagination": {
       "previous": "Oldingi sahifa",

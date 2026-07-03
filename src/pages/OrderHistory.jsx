@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import {
   Phone,
   MapPin,
@@ -11,6 +12,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 
 const PAGE_SIZE = 4;
@@ -64,19 +66,60 @@ const OrderHistory = () => {
     );
   };
 
-  const handleDelete = async (order) => {
-    const confirmed = window.confirm(t("orderHistory.confirmDelete"));
-    if (!confirmed) return;
-
+  const deleteOrder = async (order) => {
     setDeletingId(order._id);
     try {
       await api.delete(`/orders/${order._id}`);
       setOrders((prev) => prev.filter((o) => o._id !== order._id));
+      toast.success(t("orderHistory.deleteSuccess"));
     } catch (err) {
       setError(err.response?.data?.message || t("orderHistory.errorDelete"));
+      toast.error(err.response?.data?.message || t("orderHistory.errorDelete"));
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleDelete = (order) => {
+    toast.custom(
+      (toastItem) => (
+        <div
+          className={`flex items-start gap-3 bg-white border border-sand rounded-xl shadow-lg px-4 py-3.5 w-[340px] transition-all duration-200 ${
+            toastItem.visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+          }`}
+        >
+          <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
+            <AlertTriangle size={16} className="text-rose-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-ink">
+              {t("orderHistory.confirmDeleteTitle")}
+            </p>
+            <p className="text-xs text-muted mt-0.5">
+              {t("orderHistory.confirmDelete")}
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => {
+                  toast.dismiss(toastItem.id);
+                  deleteOrder(order);
+                }}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+              >
+                {t("orderHistory.confirmDeleteYes")}
+              </button>
+              <button
+                onClick={() => toast.dismiss(toastItem.id)}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-sand bg-sand/40 text-ink hover:bg-sand/70 transition-colors"
+              >
+                {t("orderHistory.confirmDeleteCancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ),
+      { duration: 8000 }
+    );
   };
 
   // ---- Pagination logic ----

@@ -121,7 +121,10 @@
     "cancelled": "Отменено",
     "currency": "сум",
     "errorLoad": "Не удалось загрузить",
-    "confirmDelete": "Вы хотите удалить этот заказ?",
+    "confirmDeleteTitle": "Удалить заказ?",
+    "confirmDeleteYes": "Удалить",
+    "confirmDeleteCancel": "Отмена",
+    "deleteSuccess": "Заказ успешно удалён",
     "errorDelete": "Не удалось удалить",
     "pagination": {
       "previous": "Предыдущая страница",
