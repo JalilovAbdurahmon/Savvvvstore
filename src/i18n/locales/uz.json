@@ -131,6 +131,16 @@
       "previous": "Oldingi sahifa",
       "next": "Keyingi sahifa",
       "pageInfo": "{{current}}-sahifa, jami {{total}} ta"
-    }
+    },
+    "confirmCompleteTitle": "Zakaz bajarildimi?",
+    "confirmComplete": "Zakaz yetkazib berilgani va bajarilganiga aminmisiz?",
+    "confirmCompleteYes": "Bajarish",
+    "confirmCompleteCancel": "Bekor qilish",
+    "completeSuccess": "Zakaz muvaffaqiyatli yakunlandi",
+
+    "confirmCancelTitle": "Zakazni bekor qilasizmi?",
+    "confirmCancelYes": "Bekor qilish",
+    "confirmCancelCancel": "Orqaga",
+    "cancelSuccess": "Zakaz bekor qilindi"
   }
 }

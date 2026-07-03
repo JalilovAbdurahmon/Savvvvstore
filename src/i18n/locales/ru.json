@@ -131,6 +131,16 @@
       "previous": "Предыдущая страница",
       "next": "Следующая страница",
       "pageInfo": "Страница {{current}} из {{total}}"
-    }
+    },
+    "confirmCompleteTitle": "Завершить заказ?",
+    "confirmComplete": "Вы уверены, что заказ доставлен и выполнен?",
+    "confirmCompleteYes": "Завершить",
+    "confirmCompleteCancel": "Отмена",
+    "completeSuccess": "Заказ успешно завершён",
+
+    "confirmCancelTitle": "Отменить заказ?",
+    "confirmCancelYes": "Отменить",
+    "confirmCancelCancel": "Назад",
+    "cancelSuccess": "Заказ отменён"
   }
 }
