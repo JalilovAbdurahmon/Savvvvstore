@@ -7,10 +7,12 @@ import AddProduct from "./pages/AddProduct.jsx";
 import ProductList from "./pages/ProductList.jsx";
 import PendingOrders from "./pages/PendingOrders.jsx";
 import OrderHistory from "./pages/OrderHistory.jsx";
+import MiniApp from "./pages/MiniApp.jsx";
 
 function App() {
   return (
     <Routes>
+      <Route path="/miniapp" element={<MiniApp />} />
       <Route path="/login" element={<Login />} />
       <Route
         path="/"
