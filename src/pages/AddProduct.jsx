@@ -17,7 +17,10 @@ const TOAST_STYLE = {
 };
 
 // Available sizes — o'zgartirish kerak bo'lsa shu ro'yxatni tahrirlang
+// Bir xil tartib ProductList.jsx dagi SIZE_ORDER bilan mos bo'lishi kerak
 const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
+const sortSizes = (arr) =>
+  [...arr].sort((a, b) => AVAILABLE_SIZES.indexOf(a) - AVAILABLE_SIZES.indexOf(b));
 
 const AddProduct = () => {
   const [name, setName] = useState("");
@@ -56,7 +59,9 @@ const AddProduct = () => {
 
   const toggleSize = (size) => {
     setSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+      prev.includes(size)
+        ? prev.filter((s) => s !== size)
+        : sortSizes([...prev, size])
     );
   };
 
@@ -107,7 +112,7 @@ const AddProduct = () => {
     formData.append("name", name);
     formData.append("price", price);
     formData.append("category", category);
-    formData.append("sizes", JSON.stringify(sizes));
+    formData.append("sizes", JSON.stringify(sortSizes(sizes)));
     formData.append("description", description);
     formData.append("image", image);
 

@@ -6,6 +6,11 @@ import { useTranslation } from "react-i18next";
 
 const API_ORIGIN = (import.meta.env.VITE_API_URL || "https://savvvvstore-backend-production.up.railway.app/api").replace(/\/api\/?$/, "");
 
+// Fixed display/save order for sizes — keep in sync with AddProduct.jsx
+const SIZE_ORDER = ["S", "M", "L", "XL"];
+const sortSizes = (arr) =>
+  [...arr].sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
+
 // Shared style for simple success/error toasts — wider, more breathing room, softer look
 const TOAST_STYLE = {
   style: {
@@ -20,7 +25,7 @@ const TOAST_STYLE = {
 const EditModal = ({ product, onClose, onSaved }) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
-  const [sizes, setSizes] = useState(product.sizes.join(", "));
+  const [sizes, setSizes] = useState(sortSizes(product.sizes)); // endi array, tartiblangan
   const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
   const [image, setImage] = useState(null);
@@ -32,7 +37,7 @@ const EditModal = ({ product, onClose, onSaved }) => {
   const original = {
     name: product.name,
     price: String(product.price),
-    sizes: product.sizes.join(", "),
+    sizes: sortSizes(product.sizes).join(","),
     description: product.description || "",
     isActive: product.isActive,
   };
@@ -40,14 +45,29 @@ const EditModal = ({ product, onClose, onSaved }) => {
   const hasChanges =
     name !== original.name ||
     String(price) !== original.price ||
-    sizes !== original.sizes ||
+    sizes.join(",") !== original.sizes ||
     description !== original.description ||
     isActive !== original.isActive ||
     image !== null;
 
+  const toggleSize = (size) => {
+    setSizes((prev) =>
+      prev.includes(size)
+        ? prev.filter((s) => s !== size)
+        : sortSizes([...prev, size])
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (sizes.length === 0) {
+      const msg = t("productList.modal.errorNoSize", "Kamida bitta razmer tanlang");
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
+      return;
+    }
 
     if (!hasChanges) {
       // Nothing changed — just close the modal, no request, no toast
@@ -58,15 +78,7 @@ const EditModal = ({ product, onClose, onSaved }) => {
     const formData = new FormData();
     formData.append("name", name);
     formData.append("price", price);
-    formData.append(
-      "sizes",
-      JSON.stringify(
-        sizes
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      )
-    );
+    formData.append("sizes", JSON.stringify(sortSizes(sizes)));
     formData.append("description", description);
     formData.append("isActive", isActive);
     if (image) formData.append("image", image);
@@ -109,7 +121,26 @@ const EditModal = ({ product, onClose, onSaved }) => {
             </div>
             <div>
               <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
-              <input className="input-field" value={sizes} onChange={(e) => setSizes(e.target.value)} required />
+              <div className="flex flex-wrap gap-2">
+                {SIZE_ORDER.map((size) => {
+                  const active = sizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      aria-pressed={active}
+                      className={`w-12 h-10 rounded-tag border text-sm font-medium transition-colors ${
+                        active
+                          ? "bg-terracotta text-white border-terracotta"
+                          : "bg-white text-charcoal border-sand hover:border-terracotta/50"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
           <div>
@@ -258,7 +289,7 @@ const ProductList = () => {
               <div className="px-4 py-3 flex-1 flex flex-col">
                 <p className="font-medium text-ink truncate">{p.name}</p>
                 <p className="text-sm text-terracottaDark font-semibold mt-0.5">{p.price.toLocaleString()} {t("productList.currency")}</p>
-                <p className="text-xs text-muted mt-1">{p.sizes.join(" · ")}</p>
+                <p className="text-xs text-muted mt-1">{sortSizes(p.sizes).join(" · ")}</p>
                 <div className="flex gap-2 mt-auto pt-3">
                   <button onClick={() => setEditing(p)} className="btn-secondary flex-1 text-xs py-1.5">
                     {t("productList.edit")}
