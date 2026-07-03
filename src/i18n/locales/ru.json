@@ -58,7 +58,12 @@
     "errorNoImage": "Пожалуйста, выберите изображение",
     "errorNoSize": "Укажите хотя бы один размер",
     "successMsg": "Товар успешно добавлен",
-    "errorDefault": "Ошибка при добавлении товара"
+    "errorDefault": "Ошибка при добавлении товара",
+    "category": "Категория",
+    "loadingCategories": "Загрузка...",
+    "noCategories": "Категории не найдены",
+    "errorNoCategory": "Выберите категорию",
+    "errorCategories": "Ошибка загрузки категорий"
   },
   "productList": {
     "title": "Товары",

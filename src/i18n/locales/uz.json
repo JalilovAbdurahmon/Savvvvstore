@@ -58,7 +58,12 @@
     "errorNoImage": "Iltimos, rasm tanlang",
     "errorNoSize": "Kamida bitta o'lcham kiriting",
     "successMsg": "Mahsulot muvaffaqiyatli qo'shildi",
-    "errorDefault": "Mahsulot qo'shishda xatolik yuz berdi"
+    "errorDefault": "Mahsulot qo'shishda xatolik yuz berdi",
+    "category": "Kategoriya",
+    "loadingCategories": "Yuklanmoqda...",
+    "noCategories": "Kategoriya topilmadi",
+    "errorNoCategory": "Kategoriyani tanlang",
+    "errorCategories": "Kategoriyalarni yuklashda xatolik"
   },
   "productList": {
     "title": "Mahsulotlar",

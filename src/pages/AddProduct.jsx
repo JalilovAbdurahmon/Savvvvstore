@@ -1,13 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 
+// Backend'da yangi category qo'shilsa (models/Product.js dagi PRODUCT_CATEGORIES),
+// shu yerga chiroyli nom qo'shib qo'ying - qo'shmasangiz ham select ishlayveradi,
+// faqat nomi tarjima qilinmagan holda (kalit so'zning o'zi) ko'rinadi.
+const CATEGORY_LABELS = {
+  uz: {
+    tshirts: "Futbolkalar",
+    shirts: "Ko'ylaklar",
+    pants: "Shimlar",
+    shorts: "Shortiklar",
+    shoes: "Oyoq kiyim",
+    misc: "Mayda-chuda",
+  },
+  ru: {
+    tshirts: "Футболки",
+    shirts: "Рубашки",
+    pants: "Брюки",
+    shorts: "Шорты",
+    shoes: "Обувь",
+    misc: "Мелочи",
+  },
+};
+
 const AddProduct = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [sizes, setSizes] = useState("");
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -15,7 +40,24 @@ const AddProduct = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    api
+      .get("/products/meta/categories")
+      .then((res) => {
+        setCategories(res.data);
+        if (res.data.length > 0) setCategory((prev) => prev || res.data[0]);
+      })
+      .catch(() => setError(t("addProduct.errorCategories")))
+      .finally(() => setCategoriesLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const categoryLabel = (key) => {
+    const map = CATEGORY_LABELS[i18n.language] || CATEGORY_LABELS.uz;
+    return map[key] || key;
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -32,6 +74,7 @@ const AddProduct = () => {
     setDescription("");
     setImage(null);
     setPreview(null);
+    setCategory(categories[0] || "");
   };
 
   const handleSubmit = async (e) => {
@@ -41,6 +84,11 @@ const AddProduct = () => {
 
     if (!image) {
       setError(t("addProduct.errorNoImage"));
+      return;
+    }
+
+    if (!category) {
+      setError(t("addProduct.errorNoCategory"));
       return;
     }
 
@@ -57,6 +105,7 @@ const AddProduct = () => {
     const formData = new FormData();
     formData.append("name", name);
     formData.append("price", price);
+    formData.append("category", category);
     formData.append("sizes", JSON.stringify(sizeList));
     formData.append("description", description);
     formData.append("image", image);
@@ -106,16 +155,37 @@ const AddProduct = () => {
               />
             </div>
             <div>
-              <label className="tag-label block mb-2">{t("addProduct.sizes")}</label>
-              <input
-                type="text"
+              <label className="tag-label block mb-2">{t("addProduct.category")}</label>
+              <select
                 className="input-field"
-                value={sizes}
-                onChange={(e) => setSizes(e.target.value)}
-                placeholder={t("addProduct.sizesPlaceholder")}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                disabled={categoriesLoading || categories.length === 0}
                 required
-              />
+              >
+                {categoriesLoading && <option value="">{t("addProduct.loadingCategories")}</option>}
+                {!categoriesLoading && categories.length === 0 && (
+                  <option value="">{t("addProduct.noCategories")}</option>
+                )}
+                {categories.map((key) => (
+                  <option key={key} value={key}>
+                    {categoryLabel(key)}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div>
+            <label className="tag-label block mb-2">{t("addProduct.sizes")}</label>
+            <input
+              type="text"
+              className="input-field"
+              value={sizes}
+              onChange={(e) => setSizes(e.target.value)}
+              placeholder={t("addProduct.sizesPlaceholder")}
+              required
+            />
           </div>
 
           <div>
