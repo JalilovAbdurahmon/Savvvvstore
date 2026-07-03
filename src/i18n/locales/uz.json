@@ -93,6 +93,7 @@
       "updateSuccess": "Mahsulot muvaffaqiyatli yangilandi",
       "deleteSuccess": "Mahsulot o'chirildi",
       "deleteConfirm": "\"{{name}}\" mahsulotini o'chirmoqchimisiz?",
+      "deleteConfirmSubtitle": "Tovarni oʻchirishni tasdiqlang",
       "cancel": "Bekor qilish",
       "confirmDelete": "Ha, o'chirish"
     }

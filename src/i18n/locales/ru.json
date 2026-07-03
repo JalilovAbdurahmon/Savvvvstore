@@ -93,6 +93,7 @@
       "updateSuccess": "Товар успешно обновлён",
       "deleteSuccess": "Товар удалён",
       "deleteConfirm": "Удалить товар «{{name}}»?",
+      "deleteConfirmSubtitle": "Подтвердите удаление товара",
       "cancel": "Отмена",
       "confirmDelete": "Да, удалить"
     }

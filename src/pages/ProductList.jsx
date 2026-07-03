@@ -160,6 +160,13 @@ const ProductList = () => {
 
   useEffect(load, []);
 
+  // Close any leftover confirm/toast when the page mounts or unmounts
+  // (e.g. user navigated away with the delete-confirm toast still open)
+  useEffect(() => {
+    toast.dismiss();
+    return () => toast.dismiss();
+  }, []);
+
   const performDelete = async (id) => {
     try {
       await api.delete(`/products/${id}`);
@@ -173,34 +180,51 @@ const ProductList = () => {
   const handleDelete = (id, name) => {
     toast(
       (tst) => (
-        <div className="flex flex-col gap-4 py-1 px-1 min-w-[260px]">
-          <p className="text-sm leading-relaxed text-ink">
-            {t("productList.toast.deleteConfirm", { name, defaultValue: `"${name}" mahsulotini o'chirmoqchimisiz?` })}
-          </p>
-          <div className="flex gap-2.5 justify-end">
-            <button
-              onClick={() => toast.dismiss(tst.id)}
-              className="text-sm font-medium px-4 py-2 rounded-tag border border-ink/15 text-ink/70 hover:bg-ink/5 transition-colors"
-            >
-              {t("productList.toast.cancel", "Bekor qilish")}
-            </button>
-            <button
-              onClick={() => {
-                toast.dismiss(tst.id);
-                performDelete(id);
-              }}
-              className="text-sm font-medium px-4 py-2 rounded-tag bg-terracottaDark text-paper hover:opacity-90 transition-opacity"
-            >
-              {t("productList.toast.confirmDelete", "Ha, o'chirish")}
-            </button>
+        <div className="flex gap-3 items-start" style={{ minWidth: 260 }}>
+          <div className="shrink-0 w-9 h-9 rounded-full bg-terracotta/15 flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z"
+                stroke="#B45F3A"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-ink text-[15px] leading-snug">
+              {t("productList.toast.deleteConfirm", { name, defaultValue: `Удалить товар «${name}»?` })}
+            </p>
+            <p className="text-xs text-muted mt-0.5">
+              {t("productList.toast.deleteConfirmSubtitle", "Подтвердите удаление товара")}
+            </p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => {
+                  toast.dismiss(tst.id);
+                  performDelete(id);
+                }}
+                className="text-xs font-medium px-3.5 py-1.5 rounded-tag bg-terracottaDark text-paper hover:opacity-90 transition-opacity"
+              >
+                {t("productList.toast.confirmDelete", "Удалить")}
+              </button>
+              <button
+                onClick={() => toast.dismiss(tst.id)}
+                className="text-xs font-medium px-3.5 py-1.5 rounded-tag border border-ink/15 text-ink/70 hover:bg-ink/5 transition-colors"
+              >
+                {t("productList.toast.cancel", "Отмена")}
+              </button>
+            </div>
           </div>
         </div>
       ),
       {
+        id: "delete-confirm-toast",
         duration: 8000,
         style: {
-          maxWidth: "420px",
-          padding: "18px 20px",
+          maxWidth: "360px",
+          padding: "16px",
           borderRadius: "16px",
           boxShadow: "0 8px 28px rgba(0,0,0,0.12)",
         },
