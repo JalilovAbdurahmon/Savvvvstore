@@ -197,7 +197,7 @@ const ProductList = () => {
               {t("productList.toast.deleteConfirm", { name, defaultValue: `Удалить товар «${name}»?` })}
             </p>
             <p className="text-xs text-muted mt-0.5">
-              {t("productList.toast.deleteConfirmSubtitle", "Подтвердите удаление товара")}
+              {t("productList.toast.deleteConfirmSubtitle")}
             </p>
             <div className="flex gap-2 mt-3">
               <button

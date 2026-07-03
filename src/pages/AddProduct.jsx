@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
+
+// Shared toast style — keep in sync with the one used on ProductList
+const TOAST_STYLE = {
+  style: {
+    padding: "14px 20px",
+    borderRadius: "14px",
+    minWidth: "280px",
+    fontSize: "14px",
+    boxShadow: "0 8px 28px rgba(0,0,0,0.12)",
+  },
+};
 
 const AddProduct = () => {
   const [name, setName] = useState("");
@@ -16,7 +28,6 @@ const AddProduct = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
@@ -30,6 +41,12 @@ const AddProduct = () => {
       .catch(() => setError(t("addProduct.errorCategories")))
       .finally(() => setCategoriesLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Close any leftover toast when leaving/entering this page
+  useEffect(() => {
+    toast.dismiss();
+    return () => toast.dismiss();
   }, []);
 
   const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
@@ -55,15 +72,18 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
 
     if (!image) {
-      setError(t("addProduct.errorNoImage"));
+      const msg = t("addProduct.errorNoImage");
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
       return;
     }
 
     if (!category) {
-      setError(t("addProduct.errorNoCategory"));
+      const msg = t("addProduct.errorNoCategory");
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
       return;
     }
 
@@ -73,7 +93,9 @@ const AddProduct = () => {
       .filter(Boolean);
 
     if (sizeList.length === 0) {
-      setError(t("addProduct.errorNoSize"));
+      const msg = t("addProduct.errorNoSize");
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
       return;
     }
 
@@ -90,11 +112,13 @@ const AddProduct = () => {
       await api.post("/products", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setSuccess(t("addProduct.successMsg"));
+      toast.success(t("addProduct.successMsg"), TOAST_STYLE);
       resetForm();
       setTimeout(() => navigate("/products"), 900);
     } catch (err) {
-      setError(err.response?.data?.message || t("addProduct.errorDefault"));
+      const msg = err.response?.data?.message || t("addProduct.errorDefault");
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
     } finally {
       setLoading(false);
     }
@@ -213,11 +237,6 @@ const AddProduct = () => {
         {error && (
           <p className="text-sm text-terracottaDark bg-terracotta/10 border border-terracotta/30 rounded-tag px-3 py-2">
             {error}
-          </p>
-        )}
-        {success && (
-          <p className="text-sm text-olive bg-olive/10 border border-olive/30 rounded-tag px-3 py-2">
-            {success}
           </p>
         )}
 
