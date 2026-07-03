@@ -11,13 +11,8 @@ export default function MiniApp() {
   const [cart, setCart] = useState([]); // {productId, name, price, image, size, quantity}
   const [selectingProduct, setSelectingProduct] = useState(null); // size tanlash uchun
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [orderDone, setOrderDone] = useState(false);
 
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
-  const tgUser = tg?.initDataUnsafe?.user;
 
   useEffect(() => {
     if (tg) {
@@ -71,48 +66,34 @@ export default function MiniApp() {
   const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
-  const submitOrder = async () => {
-    if (!phone.trim() || !address.trim() || cart.length === 0) return;
-    setSubmitting(true);
-    try {
-      await api.post("/public/orders", {
-        telegramId: String(tgUser?.id || "unknown"),
-        username: tgUser?.username || "",
-        firstName: tgUser?.first_name || "",
-        phone,
-        address,
-        items: cart.map((i) => ({
-          product: i.productId,
-          name: i.name,
-          size: i.size,
-          price: i.price,
-          quantity: i.quantity,
-          image: i.image,
-        })),
-      });
-      setOrderDone(true);
-      setCart([]);
-      setTimeout(() => {
-        tg?.close();
-      }, 2500);
-    } catch (err) {
-      alert("Xatolik: " + (err.response?.data?.message || err.message));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // Zakazni yakunlash: ism/telefon/manzil so'ramaymiz — ularni bot o'zi biladi
+  // (ism va telefon ro'yxatdan o'tishda saqlangan, manzil/lokatsiyani esa
+  // bot buyurtma tasdiqlangandan keyin so'raydi). Mini App faqat savat
+  // tarkibini botga yuboradi.
+  const submitOrder = () => {
+    if (cart.length === 0) return;
 
-  if (orderDone) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 text-center">
-        <div>
-          <div className="text-5xl mb-4">✅</div>
-          <p className="text-lg font-semibold">Buyurtmangiz qabul qilindi!</p>
-          <p className="text-gray-500 mt-1">Tez orada siz bilan bog'lanamiz.</p>
-        </div>
-      </div>
-    );
-  }
+    if (!tg || typeof tg.sendData !== "function") {
+      alert("Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.");
+      return;
+    }
+
+    const payload = {
+      items: cart.map((i) => ({
+        product: i.productId,
+        name: i.name,
+        size: i.size,
+        price: i.price,
+        quantity: i.quantity,
+        image: i.image,
+      })),
+    };
+
+    // Bu ma'lumot botga "web_app_data" sifatida boradi, keyin bot
+    // lokatsiyani so'rab, zakazni yaratadi. Yuborilgandan keyin
+    // Telegram Mini App'ni avtomatik yopadi.
+    tg.sendData(JSON.stringify(payload));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -194,7 +175,7 @@ export default function MiniApp() {
         </button>
       )}
 
-      {/* Checkout panel */}
+      {/* Checkout panel — endi faqat savat tarkibini ko'rsatadi, telefon/manzil so'ramaydi */}
       {checkoutOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setCheckoutOpen(false)}>
           <div className="bg-white w-full rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -215,26 +196,17 @@ export default function MiniApp() {
 
             <p className="text-right font-semibold mt-3">Jami: {total.toLocaleString()} so'm</p>
 
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Telefon raqamingiz"
-              className="w-full border rounded-lg p-2 mt-3 text-sm"
-            />
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Yetkazib berish manzili"
-              className="w-full border rounded-lg p-2 mt-2 text-sm"
-              rows={2}
-            />
+            <p className="text-xs text-gray-400 mt-3">
+              Buyurtma berish tugmasini bosgach, ism va telefon raqamingiz avtomatik olinadi,
+              so'ngra bot sizdan yetkazib berish manzilini (lokatsiyani) so'raydi.
+            </p>
 
             <button
               onClick={submitOrder}
-              disabled={submitting || cart.length === 0}
+              disabled={cart.length === 0}
               className="w-full bg-black text-white py-3 rounded-xl mt-3 font-medium disabled:opacity-50"
             >
-              {submitting ? "Yuborilmoqda..." : "Buyurtma berish"}
+              Buyurtma berish
             </button>
           </div>
         </div>
