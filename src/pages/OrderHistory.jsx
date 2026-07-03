@@ -140,27 +140,27 @@ const OrderHistory = () => {
               return (
                 <div
                   key={o._id}
-                  className="card p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-200 border border-sand/60 relative"
+                  className="card p-3.5 flex flex-col gap-2.5 hover:shadow-lg transition-shadow duration-200 border border-sand/60 relative"
                 >
                   {/* Delete button */}
                   <button
                     onClick={() => handleDelete(o)}
                     disabled={deletingId === o._id}
                     title={t("orderHistory.delete", "O'chirish")}
-                    className="absolute top-5.5 right-4 p-1.5 rounded-lg text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                    className="absolute top-4 right-3 p-1 rounded-lg text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} />
                   </button>
 
                   {/* Header: customer + status */}
-                  <div className="flex items-start justify-between pr-8">
+                  <div className="flex items-start justify-between pr-7">
                     <div>
-                      <p className="text-base font-semibold text-ink">
+                      <p className="text-sm font-semibold text-ink">
                         {o.firstName || t("orderHistory.customer")}
                       </p>
                       {o.phone && (
-                        <div className="flex items-center gap-1.5 mt-1 text-sm text-muted">
-                          <Phone size={14} />
+                        <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted">
+                          <Phone size={12} />
                           <a
                             href={`tel:${o.phone}`}
                             className="hover:text-terracottaDark transition-colors"
@@ -171,7 +171,7 @@ const OrderHistory = () => {
                       )}
                     </div>
                     <span
-                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-tag font-medium whitespace-nowrap ${status.cls}`}
+                      className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-tag font-medium whitespace-nowrap ${status.cls}`}
                     >
                       {status.icon}
                       {status.text}
@@ -179,35 +179,35 @@ const OrderHistory = () => {
                   </div>
 
                   {/* Products */}
-                  <div className="border-t border-sand pt-3">
-                    <p className="tag-label text-xs text-muted mb-1">
+                  <div className="border-t border-sand pt-2">
+                    <p className="tag-label text-[11px] text-muted mb-0.5">
                       {t("orderHistory.products")}
                     </p>
-                    <p className="text-sm text-ink/80 leading-relaxed">
+                    <p className="text-xs text-ink/80 leading-relaxed">
                       {o.items.map((i) => `${i.name} (${i.size}) ×${i.quantity}`).join(", ")}
                     </p>
                   </div>
 
                   {/* Amount */}
                   <div className="flex items-center justify-between">
-                    <p className="tag-label text-xs text-muted">
+                    <p className="tag-label text-[11px] text-muted">
                       {t("orderHistory.amount")}
                     </p>
-                    <p className="text-lg font-semibold text-ink">
+                    <p className="text-base font-semibold text-ink">
                       {o.totalPrice.toLocaleString()} {t("orderHistory.currency")}
                     </p>
                   </div>
 
                   {/* Timestamps */}
-                  <div className="grid grid-cols-2 gap-3 border-t border-sand pt-3 text-xs">
+                  <div className="grid grid-cols-2 gap-2 border-t border-sand pt-2 text-[11px]">
                     <div>
-                      <p className="tag-label text-muted mb-1 flex items-center gap-1">
+                      <p className="tag-label text-muted mb-0.5 flex items-center gap-1">
                         {t("orderHistory.orderedAt")}
                       </p>
                       <p className="text-ink/80">{formatDate(o.createdAt)}</p>
                     </div>
                     <div>
-                      <p className="tag-label text-muted mb-1 flex items-center gap-1">
+                      <p className="tag-label text-muted mb-0.5 flex items-center gap-1">
                         {t("orderHistory.deliveredAt")}
                       </p>
                       <p className="text-ink/80">{formatDate(o.completedAt)}</p>
@@ -215,13 +215,13 @@ const OrderHistory = () => {
                   </div>
 
                   {/* Location button */}
-                  <div className="pt-1">
+                  <div className="pt-0.5">
                     <button
                       onClick={() => openLocation(o)}
                       disabled={!o.address}
-                      className="w-full flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg border border-sand bg-sand/40 text-ink hover:bg-terracottaDark hover:text-white hover:border-terracottaDark transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-sand/40 disabled:hover:text-ink"
+                      className="w-full flex items-center justify-center gap-2 text-xs font-medium px-3 py-2 rounded-lg border border-sand bg-sand/40 text-ink hover:bg-terracottaDark hover:text-white hover:border-terracottaDark transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-sand/40 disabled:hover:text-ink"
                     >
-                      <MapPin size={16} />
+                      <MapPin size={14} />
                       {t("orderHistory.viewLocation")}
                     </button>
                   </div>
