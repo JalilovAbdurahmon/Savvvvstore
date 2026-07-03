@@ -122,6 +122,11 @@
     "currency": "сум",
     "errorLoad": "Не удалось загрузить",
     "confirmDelete": "Вы хотите удалить этот заказ?",
-    "errorDelete": "Не удалось удалить"
+    "errorDelete": "Не удалось удалить",
+    "pagination": {
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "pageInfo": "Страница {{current}} из {{total}}"
+    }
   }
 }

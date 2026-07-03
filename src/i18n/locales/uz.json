@@ -122,6 +122,11 @@
     "currency": "so'm",
     "errorLoad": "Yuklab bo'lmadi",
     "confirmDelete": "Bu buyurtmani o'chirmoqchimisiz?",
-    "errorDelete": "O'chirib bo'lmadi"
+    "errorDelete": "O'chirib bo'lmadi",
+    "pagination": {
+      "previous": "Oldingi sahifa",
+      "next": "Keyingi sahifa",
+      "pageInfo": "{{current}}-sahifa, jami {{total}} ta"
+    }
   }
 }
