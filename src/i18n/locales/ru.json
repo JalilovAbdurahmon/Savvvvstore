@@ -101,7 +101,17 @@
     "currency": "сум",
     "errorLoad": "Не удалось загрузить",
     "errorAction": "Не удалось выполнить действие",
-    "confirmCancel": "Подтвердите отмену заказа"
+    "confirmCancel": "Подтвердите отмену заказа",
+    "confirmCompleteTitle": "Завершить заказ?",
+    "confirmComplete": "Вы уверены, что заказ доставлен и выполнен?",
+    "confirmCompleteYes": "Завершить",
+    "confirmCompleteCancel": "Отмена",
+    "completeSuccess": "Заказ успешно завершён",
+
+    "confirmCancelTitle": "Отменить заказ?",
+    "confirmCancelYes": "Отменить",
+    "confirmCancelCancel": "Назад",
+    "cancelSuccess": "Заказ отменён"
   },
   "orderHistory": {
     "title": "История заказов",
@@ -131,16 +141,6 @@
       "previous": "Предыдущая страница",
       "next": "Следующая страница",
       "pageInfo": "Страница {{current}} из {{total}}"
-    },
-    "confirmCompleteTitle": "Завершить заказ?",
-    "confirmComplete": "Вы уверены, что заказ доставлен и выполнен?",
-    "confirmCompleteYes": "Завершить",
-    "confirmCompleteCancel": "Отмена",
-    "completeSuccess": "Заказ успешно завершён",
-
-    "confirmCancelTitle": "Отменить заказ?",
-    "confirmCancelYes": "Отменить",
-    "confirmCancelCancel": "Назад",
-    "cancelSuccess": "Заказ отменён"
+    }
   }
 }

@@ -101,7 +101,17 @@
     "currency": "so'm",
     "errorLoad": "Yuklab bo'lmadi",
     "errorAction": "Amalni bajarib bo'lmadi",
-    "confirmCancel": "Zakazni bekor qilishni tasdiqlaysizmi?"
+    "confirmCancel": "Zakazni bekor qilishni tasdiqlaysizmi?",
+    "confirmCompleteTitle": "Zakaz bajarildimi?",
+    "confirmComplete": "Zakaz yetkazib berilgani va bajarilganiga aminmisiz?",
+    "confirmCompleteYes": "Bajarish",
+    "confirmCompleteCancel": "Bekor qilish",
+    "completeSuccess": "Zakaz muvaffaqiyatli yakunlandi",
+
+    "confirmCancelTitle": "Zakazni bekor qilasizmi?",
+    "confirmCancelYes": "Bekor qilish",
+    "confirmCancelCancel": "Orqaga",
+    "cancelSuccess": "Zakaz bekor qilindi"
   },
   "orderHistory": {
     "title": "Zakazlar tarixi",
@@ -131,16 +141,6 @@
       "previous": "Oldingi sahifa",
       "next": "Keyingi sahifa",
       "pageInfo": "{{current}}-sahifa, jami {{total}} ta"
-    },
-    "confirmCompleteTitle": "Zakaz bajarildimi?",
-    "confirmComplete": "Zakaz yetkazib berilgani va bajarilganiga aminmisiz?",
-    "confirmCompleteYes": "Bajarish",
-    "confirmCompleteCancel": "Bekor qilish",
-    "completeSuccess": "Zakaz muvaffaqiyatli yakunlandi",
-
-    "confirmCancelTitle": "Zakazni bekor qilasizmi?",
-    "confirmCancelYes": "Bekor qilish",
-    "confirmCancelCancel": "Orqaga",
-    "cancelSuccess": "Zakaz bekor qilindi"
+    }
   }
 }
