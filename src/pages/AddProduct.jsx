@@ -4,28 +4,6 @@ import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 
-// Backend'da yangi category qo'shilsa (models/Product.js dagi PRODUCT_CATEGORIES),
-// shu yerga chiroyli nom qo'shib qo'ying - qo'shmasangiz ham select ishlayveradi,
-// faqat nomi tarjima qilinmagan holda (kalit so'zning o'zi) ko'rinadi.
-const CATEGORY_LABELS = {
-  uz: {
-    tshirts: "Futbolkalar",
-    shirts: "Ko'ylaklar",
-    pants: "Shimlar",
-    shorts: "Shortiklar",
-    shoes: "Oyoq kiyim",
-    misc: "Mayda-chuda",
-  },
-  ru: {
-    tshirts: "Футболки",
-    shirts: "Рубашки",
-    pants: "Брюки",
-    shorts: "Шорты",
-    shoes: "Обувь",
-    misc: "Мелочи",
-  },
-};
-
 const AddProduct = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -44,20 +22,17 @@ const AddProduct = () => {
 
   useEffect(() => {
     api
-      .get("/products/meta/categories")
+      .get("/products/categories") // <-- to'g'rilandi: "/meta/categories" emas
       .then((res) => {
-        setCategories(res.data);
-        if (res.data.length > 0) setCategory((prev) => prev || res.data[0]);
+        setCategories(res.data); // res.data = [{key, uz, ru}, ...]
+        if (res.data.length > 0) setCategory((prev) => prev || res.data[0].key);
       })
       .catch(() => setError(t("addProduct.errorCategories")))
       .finally(() => setCategoriesLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const categoryLabel = (key) => {
-    const map = CATEGORY_LABELS[i18n.language] || CATEGORY_LABELS.uz;
-    return map[key] || key;
-  };
+  const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -130,7 +105,9 @@ const AddProduct = () => {
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         <div className="card px-6 py-6 space-y-5">
           <div>
-            <label className="tag-label block mb-2">{t("addProduct.name")}</label>
+            <label className="tag-label block mb-2">
+              {t("addProduct.name")}
+            </label>
             <input
               type="text"
               className="input-field"
@@ -143,7 +120,9 @@ const AddProduct = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="tag-label block mb-2">{t("addProduct.price")}</label>
+              <label className="tag-label block mb-2">
+                {t("addProduct.price")}
+              </label>
               <input
                 type="number"
                 min="0"
@@ -155,7 +134,9 @@ const AddProduct = () => {
               />
             </div>
             <div>
-              <label className="tag-label block mb-2">{t("addProduct.category")}</label>
+              <label className="tag-label block mb-2">
+                {t("addProduct.category")}
+              </label>
               <select
                 className="input-field"
                 value={category}
@@ -163,13 +144,15 @@ const AddProduct = () => {
                 disabled={categoriesLoading || categories.length === 0}
                 required
               >
-                {categoriesLoading && <option value="">{t("addProduct.loadingCategories")}</option>}
+                {categoriesLoading && (
+                  <option value="">{t("addProduct.loadingCategories")}</option>
+                )}
                 {!categoriesLoading && categories.length === 0 && (
                   <option value="">{t("addProduct.noCategories")}</option>
                 )}
-                {categories.map((key) => (
-                  <option key={key} value={key}>
-                    {categoryLabel(key)}
+                {categories.map((cat) => (
+                  <option key={cat.key} value={cat.key}>
+                    {categoryLabel(cat)}
                   </option>
                 ))}
               </select>
@@ -177,7 +160,9 @@ const AddProduct = () => {
           </div>
 
           <div>
-            <label className="tag-label block mb-2">{t("addProduct.sizes")}</label>
+            <label className="tag-label block mb-2">
+              {t("addProduct.sizes")}
+            </label>
             <input
               type="text"
               className="input-field"
@@ -189,7 +174,9 @@ const AddProduct = () => {
           </div>
 
           <div>
-            <label className="tag-label block mb-2">{t("addProduct.description")}</label>
+            <label className="tag-label block mb-2">
+              {t("addProduct.description")}
+            </label>
             <textarea
               className="input-field min-h-[90px] resize-none"
               value={description}
@@ -199,14 +186,25 @@ const AddProduct = () => {
           </div>
 
           <div>
-            <label className="tag-label block mb-2">{t("addProduct.image")}</label>
+            <label className="tag-label block mb-2">
+              {t("addProduct.image")}
+            </label>
             <div className="flex items-center gap-4">
               {preview && (
-                <img src={preview} alt="preview" className="w-20 h-20 object-cover rounded-tag border border-sand" />
+                <img
+                  src={preview}
+                  alt="preview"
+                  className="w-20 h-20 object-cover rounded-tag border border-sand"
+                />
               )}
               <label className="btn-secondary cursor-pointer">
                 {t("addProduct.chooseImage")}
-                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </label>
             </div>
           </div>
@@ -218,7 +216,9 @@ const AddProduct = () => {
           </p>
         )}
         {success && (
-          <p className="text-sm text-olive bg-olive/10 border border-olive/30 rounded-tag px-3 py-2">{success}</p>
+          <p className="text-sm text-olive bg-olive/10 border border-olive/30 rounded-tag px-3 py-2">
+            {success}
+          </p>
         )}
 
         <button type="submit" disabled={loading} className="btn-primary">
