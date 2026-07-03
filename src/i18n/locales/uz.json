@@ -120,6 +120,8 @@
     "completed": "Bajarildi",
     "cancelled": "Bekor qilindi",
     "currency": "so'm",
-    "errorLoad": "Yuklab bo'lmadi"
+    "errorLoad": "Yuklab bo'lmadi",
+    "confirmDelete": "Bu buyurtmani o'chirmoqchimisiz?",
+    "errorDelete": "O'chirib bo'lmadi"
   }
 }

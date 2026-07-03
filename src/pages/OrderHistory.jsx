@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
-import { Phone, MapPin, Calendar, CheckCircle2, XCircle, Package } from "lucide-react";
+import { Phone, MapPin, CheckCircle2, XCircle, Package, Trash2 } from "lucide-react";
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
   const { t } = useTranslation();
 
   const statusStyles = {
@@ -43,22 +44,28 @@ const OrderHistory = () => {
       : "—";
 
   const openLocation = (order) => {
-    const lat = order.location?.lat;
-    const lng = order.location?.lng;
-    if (lat != null && lng != null) {
-      window.open(
-        `https://www.google.com/maps?q=${lat},${lng}`,
-        "_blank",
-        "noopener,noreferrer"
-      );
-    } else if (order.location?.address) {
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          order.location.address
-        )}`,
-        "_blank",
-        "noopener,noreferrer"
-      );
+    if (!order.address) return;
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const handleDelete = async (order) => {
+    const confirmed = window.confirm(
+      t("orderHistory.confirmDelete")
+    );
+    if (!confirmed) return;
+
+    setDeletingId(order._id);
+    try {
+      await api.delete(`/orders/${order._id}`);
+      setOrders((prev) => prev.filter((o) => o._id !== order._id));
+    } catch (err) {
+      setError(err.response?.data?.message || t("orderHistory.errorDelete"));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -89,22 +96,32 @@ const OrderHistory = () => {
             return (
               <div
                 key={o._id}
-                className="card p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-200 border border-sand/60"
+                className="card p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-200 border border-sand/60 relative"
               >
+                {/* Delete button */}
+                <button
+                  onClick={() => handleDelete(o)}
+                  disabled={deletingId === o._id}
+                  title={t("orderHistory.delete", "O'chirish")}
+                  className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                >
+                  <Trash2 size={16} />
+                </button>
+
                 {/* Header: customer + status */}
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between pr-8">
                   <div>
                     <p className="text-base font-semibold text-ink">
                       {o.firstName || t("orderHistory.customer")}
                     </p>
-                    {o.phoneNumber && (
+                    {o.phone && (
                       <div className="flex items-center gap-1.5 mt-1 text-sm text-muted">
                         <Phone size={14} />
                         <a
-                          href={`tel:${o.phoneNumber}`}
+                          href={`tel:${o.phone}`}
                           className="hover:text-terracottaDark transition-colors"
                         >
-                          {o.phoneNumber}
+                          {o.phone}
                         </a>
                       </div>
                     )}
@@ -141,15 +158,13 @@ const OrderHistory = () => {
                 <div className="grid grid-cols-2 gap-3 border-t border-sand pt-3 text-xs">
                   <div>
                     <p className="tag-label text-muted mb-1 flex items-center gap-1">
-                      <Calendar size={12} />
-                      {t("orderHistory.orderedAt", "Buyurtma vaqti")}
+                      {t("orderHistory.orderedAt")}
                     </p>
                     <p className="text-ink/80">{formatDate(o.createdAt)}</p>
                   </div>
                   <div>
                     <p className="tag-label text-muted mb-1 flex items-center gap-1">
-                      <CheckCircle2 size={12} />
-                      {t("orderHistory.deliveredAt", "Yetkazilgan vaqt")}
+                      {t("orderHistory.deliveredAt")}
                     </p>
                     <p className="text-ink/80">{formatDate(o.completedAt)}</p>
                   </div>
@@ -159,11 +174,11 @@ const OrderHistory = () => {
                 <div className="pt-1">
                   <button
                     onClick={() => openLocation(o)}
-                    disabled={!o.location}
+                    disabled={!o.address}
                     className="w-full flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg border border-sand bg-sand/40 text-ink hover:bg-terracottaDark hover:text-white hover:border-terracottaDark transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-sand/40 disabled:hover:text-ink"
                   >
                     <MapPin size={16} />
-                    {t("orderHistory.viewLocation", "Joylashuvni ko'rish")}
+                    {t("orderHistory.viewLocation")}
                   </button>
                 </div>
               </div>
