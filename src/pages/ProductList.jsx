@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
@@ -16,9 +17,33 @@ const EditModal = ({ product, onClose, onSaved }) => {
   const [error, setError] = useState("");
   const { t } = useTranslation();
 
+  // Original snapshot so we can detect whether the user actually changed anything
+  const original = {
+    name: product.name,
+    price: String(product.price),
+    sizes: product.sizes.join(", "),
+    description: product.description || "",
+    isActive: product.isActive,
+  };
+
+  const hasChanges =
+    name !== original.name ||
+    String(price) !== original.price ||
+    sizes !== original.sizes ||
+    description !== original.description ||
+    isActive !== original.isActive ||
+    image !== null;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!hasChanges) {
+      // Nothing changed — just close the modal, no request, no toast
+      onClose();
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", name);
     formData.append("price", price);
@@ -41,8 +66,11 @@ const EditModal = ({ product, onClose, onSaved }) => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       onSaved(res.data);
+      toast.success(t("productList.toast.updateSuccess", "Mahsulot muvaffaqiyatli yangilandi"));
     } catch (err) {
-      setError(err.response?.data?.message || t("productList.modal.errorDefault"));
+      const message = err.response?.data?.message || t("productList.modal.errorDefault");
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -121,14 +149,44 @@ const ProductList = () => {
 
   useEffect(load, []);
 
-  const handleDelete = async (id) => {
-    if (!confirm(t("productList.confirmDelete"))) return;
+  const performDelete = async (id) => {
     try {
       await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p._id !== id));
+      toast.success(t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"));
     } catch (err) {
-      setError(err.response?.data?.message || t("productList.errorDelete"));
+      toast.error(err.response?.data?.message || t("productList.errorDelete"));
     }
+  };
+
+  const handleDelete = (id, name) => {
+    toast(
+      (tst) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-ink">
+            {t("productList.toast.deleteConfirm", { name, defaultValue: `"${name}" mahsulotini o'chirmoqchimisiz?` })}
+          </p>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => toast.dismiss(tst.id)}
+              className="text-xs px-3 py-1.5 rounded-tag border border-ink/20 text-ink/70 hover:bg-ink/5 transition-colors"
+            >
+              {t("productList.toast.cancel", "Bekor qilish")}
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(tst.id);
+                performDelete(id);
+              }}
+              className="text-xs px-3 py-1.5 rounded-tag bg-terracottaDark text-paper hover:opacity-90 transition-opacity"
+            >
+              {t("productList.toast.confirmDelete", "Ha, o'chirish")}
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 8000, style: { maxWidth: "360px" } }
+    );
   };
 
   const handleSaved = (updated) => {
@@ -163,7 +221,7 @@ const ProductList = () => {
                     {t("productList.edit")}
                   </button>
                   <button
-                    onClick={() => handleDelete(p._id)}
+                    onClick={() => handleDelete(p._id, p.name)}
                     className="flex-1 text-xs py-1.5 rounded-tag border border-terracotta/40 text-terracottaDark hover:bg-terracotta/10 transition-colors"
                   >
                     {t("productList.delete")}

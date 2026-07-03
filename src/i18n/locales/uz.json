@@ -88,6 +88,13 @@
       "saving": "Saqlanmoqda...",
       "cancel": "Bekor qilish",
       "errorDefault": "Saqlashda xatolik yuz berdi"
+    },
+    "toast": {
+      "updateSuccess": "Mahsulot muvaffaqiyatli yangilandi",
+      "deleteSuccess": "Mahsulot o'chirildi",
+      "deleteConfirm": "\"{{name}}\" mahsulotini o'chirmoqchimisiz?",
+      "cancel": "Bekor qilish",
+      "confirmDelete": "Ha, o'chirish"
     }
   },
   "pendingOrders": {

@@ -88,6 +88,13 @@
       "saving": "Сохранение...",
       "cancel": "Отмена",
       "errorDefault": "Ошибка при сохранении"
+    },
+    "toast": {
+      "updateSuccess": "Товар успешно обновлён",
+      "deleteSuccess": "Товар удалён",
+      "deleteConfirm": "Удалить товар «{{name}}»?",
+      "cancel": "Отмена",
+      "confirmDelete": "Да, удалить"
     }
   },
   "pendingOrders": {
