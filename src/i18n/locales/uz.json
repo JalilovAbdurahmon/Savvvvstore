@@ -121,6 +121,7 @@
     "cancelled": "Bekor qilindi",
     "currency": "so'm",
     "errorLoad": "Yuklab bo'lmadi",
+    "confirmDelete": "Bu amalni ortga qaytarib bo'lmaydi. Ushbu zakazni o'chirishga aminmisiz?",
     "confirmDeleteTitle": "Zakazni o'chirasizmi?",
     "confirmDeleteYes": "O'chirish",
     "confirmDeleteCancel": "Bekor qilish",

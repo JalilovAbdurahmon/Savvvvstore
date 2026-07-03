@@ -121,6 +121,7 @@
     "cancelled": "Отменено",
     "currency": "сум",
     "errorLoad": "Не удалось загрузить",
+    "confirmDelete": "Это действие нельзя отменить. Вы уверены, что хотите удалить этот заказ?",
     "confirmDeleteTitle": "Удалить заказ?",
     "confirmDeleteYes": "Удалить",
     "confirmDeleteCancel": "Отмена",
