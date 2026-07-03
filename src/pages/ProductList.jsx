@@ -6,6 +6,17 @@ import { useTranslation } from "react-i18next";
 
 const API_ORIGIN = (import.meta.env.VITE_API_URL || "https://savvvvstore-backend-production.up.railway.app/api").replace(/\/api\/?$/, "");
 
+// Shared style for simple success/error toasts — wider, more breathing room, softer look
+const TOAST_STYLE = {
+  style: {
+    padding: "14px 20px",
+    borderRadius: "14px",
+    minWidth: "280px",
+    fontSize: "14px",
+    boxShadow: "0 8px 28px rgba(0,0,0,0.12)",
+  },
+};
+
 const EditModal = ({ product, onClose, onSaved }) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
@@ -66,11 +77,11 @@ const EditModal = ({ product, onClose, onSaved }) => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       onSaved(res.data);
-      toast.success(t("productList.toast.updateSuccess", "Mahsulot muvaffaqiyatli yangilandi"));
+      toast.success(t("productList.toast.updateSuccess", "Mahsulot muvaffaqiyatli yangilandi"), TOAST_STYLE);
     } catch (err) {
       const message = err.response?.data?.message || t("productList.modal.errorDefault");
       setError(message);
-      toast.error(message);
+      toast.error(message, TOAST_STYLE);
     } finally {
       setLoading(false);
     }
@@ -153,23 +164,23 @@ const ProductList = () => {
     try {
       await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p._id !== id));
-      toast.success(t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"));
+      toast.success(t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"), TOAST_STYLE);
     } catch (err) {
-      toast.error(err.response?.data?.message || t("productList.errorDelete"));
+      toast.error(err.response?.data?.message || t("productList.errorDelete"), TOAST_STYLE);
     }
   };
 
   const handleDelete = (id, name) => {
     toast(
       (tst) => (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-ink">
+        <div className="flex flex-col gap-4 py-1 px-1 min-w-[260px]">
+          <p className="text-sm leading-relaxed text-ink">
             {t("productList.toast.deleteConfirm", { name, defaultValue: `"${name}" mahsulotini o'chirmoqchimisiz?` })}
           </p>
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2.5 justify-end">
             <button
               onClick={() => toast.dismiss(tst.id)}
-              className="text-xs px-3 py-1.5 rounded-tag border border-ink/20 text-ink/70 hover:bg-ink/5 transition-colors"
+              className="text-sm font-medium px-4 py-2 rounded-tag border border-ink/15 text-ink/70 hover:bg-ink/5 transition-colors"
             >
               {t("productList.toast.cancel", "Bekor qilish")}
             </button>
@@ -178,14 +189,22 @@ const ProductList = () => {
                 toast.dismiss(tst.id);
                 performDelete(id);
               }}
-              className="text-xs px-3 py-1.5 rounded-tag bg-terracottaDark text-paper hover:opacity-90 transition-opacity"
+              className="text-sm font-medium px-4 py-2 rounded-tag bg-terracottaDark text-paper hover:opacity-90 transition-opacity"
             >
               {t("productList.toast.confirmDelete", "Ha, o'chirish")}
             </button>
           </div>
         </div>
       ),
-      { duration: 8000, style: { maxWidth: "360px" } }
+      {
+        duration: 8000,
+        style: {
+          maxWidth: "420px",
+          padding: "18px 20px",
+          borderRadius: "16px",
+          boxShadow: "0 8px 28px rgba(0,0,0,0.12)",
+        },
+      }
     );
   };
 
