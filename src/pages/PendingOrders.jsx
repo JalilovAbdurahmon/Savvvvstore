@@ -47,7 +47,11 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => (
         >
           {t("pendingOrders.cancel")}
         </button>
-        <button disabled={busy} onClick={() => onComplete(order._id)} className="btn-primary text-xs py-1.5">
+        <button
+          disabled={busy}
+          onClick={() => onComplete(order._id)}
+          className="text-xs px-3.5 py-1.5 rounded-tag bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors disabled:opacity-60"
+        >
           {t("pendingOrders.complete")}
         </button>
       </div>
