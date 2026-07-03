@@ -103,7 +103,7 @@ const OrderHistory = () => {
                   onClick={() => handleDelete(o)}
                   disabled={deletingId === o._id}
                   title={t("orderHistory.delete", "O'chirish")}
-                  className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                  className="absolute top-7 right-4 p-1.5 rounded-lg text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
                 >
                   <Trash2 size={16} />
                 </button>
