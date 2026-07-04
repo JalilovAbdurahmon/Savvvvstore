@@ -1,9 +1,55 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import api from "../api/axios.js";
 
 const API_ROOT = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 
+// Bot foydalanuvchi uchun tanlagan tilni ?lang= orqali yuboradi
+const getLangFromUrl = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const lang = params.get("lang");
+    return lang === "ru" ? "ru" : "uz";
+  } catch {
+    return "uz";
+  }
+};
+
+const TEXTS = {
+  uz: {
+    all: "Hammasi",
+    loading: "Yuklanmoqda...",
+    notFound: "Mahsulotlar topilmadi",
+    addToCart: "Savatga qo'shish",
+    chooseSize: "o'lchamni tanlang",
+    cart: "Savat",
+    total: "Jami",
+    sum: "so'm",
+    checkoutNote:
+      "Buyurtma berish tugmasini bosgach, ism va telefon raqamingiz avtomatik olinadi, so'ngra bot sizdan yetkazib berish manzilini (lokatsiyani) so'raydi.",
+    placeOrder: "Buyurtma berish",
+    telegramOnly: "Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.",
+  },
+  ru: {
+    all: "Все",
+    loading: "Загрузка...",
+    notFound: "Товары не найдены",
+    addToCart: "Добавить в корзину",
+    chooseSize: "выберите размер",
+    cart: "Корзина",
+    total: "Итого",
+    sum: "сум",
+    checkoutNote:
+      "После нажатия кнопки заказа ваше имя и номер телефона будут получены автоматически, затем бот запросит у вас адрес доставки (геолокацию).",
+    placeOrder: "Оформить заказ",
+    telegramOnly: "Оформление заказа доступно только внутри Telegram.",
+  },
+};
+
 export default function MiniApp() {
+  const lang = useMemo(getLangFromUrl, []);
+  const tr = TEXTS[lang];
+  const nameKey = lang === "ru" ? "ru" : "uz";
+
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState("");
   const [products, setProducts] = useState([]);
@@ -74,7 +120,7 @@ export default function MiniApp() {
     if (cart.length === 0) return;
 
     if (!tg || typeof tg.sendData !== "function") {
-      alert("Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.");
+      alert(tr.telegramOnly);
       return;
     }
 
@@ -105,7 +151,7 @@ export default function MiniApp() {
             activeCategory === "" ? "bg-black text-white" : "bg-white border"
           }`}
         >
-          Hammasi
+          {tr.all}
         </button>
         {categories.map((c) => (
           <button
@@ -115,16 +161,16 @@ export default function MiniApp() {
               activeCategory === c.key ? "bg-black text-white" : "bg-white border"
             }`}
           >
-            {c.uz}
+            {c[nameKey]}
           </button>
         ))}
       </div>
 
       {/* Mahsulotlar */}
       {loading ? (
-        <p className="text-center py-10 text-gray-400">Yuklanmoqda...</p>
+        <p className="text-center py-10 text-gray-400">{tr.loading}</p>
       ) : products.length === 0 ? (
-        <p className="text-center py-10 text-gray-400">Mahsulotlar topilmadi</p>
+        <p className="text-center py-10 text-gray-400">{tr.notFound}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 p-3">
           {products.map((p) => (
@@ -132,12 +178,14 @@ export default function MiniApp() {
               <img src={`${API_ROOT}${p.image}`} alt={p.name} className="w-full h-32 object-cover" />
               <div className="p-2">
                 <p className="text-sm font-medium truncate">{p.name}</p>
-                <p className="text-sm text-gray-600">{p.price.toLocaleString()} so'm</p>
+                <p className="text-sm text-gray-600">
+                  {p.price.toLocaleString()} {tr.sum}
+                </p>
                 <button
                   onClick={() => setSelectingProduct(p)}
                   className="mt-2 w-full bg-black text-white text-xs py-1.5 rounded-lg"
                 >
-                  Savatga qo'shish
+                  {tr.addToCart}
                 </button>
               </div>
             </div>
@@ -149,7 +197,9 @@ export default function MiniApp() {
       {selectingProduct && (
         <div className="fixed inset-0 bg-black/40 flex items-end z-20" onClick={() => setSelectingProduct(null)}>
           <div className="bg-white w-full rounded-t-2xl p-4" onClick={(e) => e.stopPropagation()}>
-            <p className="font-medium mb-3">{selectingProduct.name} — o'lchamni tanlang</p>
+            <p className="font-medium mb-3">
+              {selectingProduct.name} — {tr.chooseSize}
+            </p>
             <div className="flex flex-wrap gap-2">
               {selectingProduct.sizes.map((s) => (
                 <button
@@ -171,7 +221,7 @@ export default function MiniApp() {
           onClick={() => setCheckoutOpen(true)}
           className="fixed bottom-4 left-4 right-4 bg-black text-white py-3 rounded-xl font-medium z-20"
         >
-          Savat ({cartCount}) — {total.toLocaleString()} so'm
+          {tr.cart} ({cartCount}) — {total.toLocaleString()} {tr.sum}
         </button>
       )}
 
@@ -179,12 +229,16 @@ export default function MiniApp() {
       {checkoutOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setCheckoutOpen(false)}>
           <div className="bg-white w-full rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <p className="font-semibold mb-3">Savat</p>
+            <p className="font-semibold mb-3">{tr.cart}</p>
             {cart.map((i) => (
               <div key={i.productId + i.size} className="flex items-center justify-between py-2 border-b">
                 <div>
-                  <p className="text-sm">{i.name} ({i.size})</p>
-                  <p className="text-xs text-gray-500">{i.price.toLocaleString()} so'm</p>
+                  <p className="text-sm">
+                    {i.name} ({i.size})
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {i.price.toLocaleString()} {tr.sum}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => changeQty(i.productId, i.size, -1)} className="w-6 h-6 border rounded">-</button>
@@ -194,19 +248,18 @@ export default function MiniApp() {
               </div>
             ))}
 
-            <p className="text-right font-semibold mt-3">Jami: {total.toLocaleString()} so'm</p>
-
-            <p className="text-xs text-gray-400 mt-3">
-              Buyurtma berish tugmasini bosgach, ism va telefon raqamingiz avtomatik olinadi,
-              so'ngra bot sizdan yetkazib berish manzilini (lokatsiyani) so'raydi.
+            <p className="text-right font-semibold mt-3">
+              {tr.total}: {total.toLocaleString()} {tr.sum}
             </p>
+
+            <p className="text-xs text-gray-400 mt-3">{tr.checkoutNote}</p>
 
             <button
               onClick={submitOrder}
               disabled={cart.length === 0}
               className="w-full bg-black text-white py-3 rounded-xl mt-3 font-medium disabled:opacity-50"
             >
-              Buyurtma berish
+              {tr.placeOrder}
             </button>
           </div>
         </div>
