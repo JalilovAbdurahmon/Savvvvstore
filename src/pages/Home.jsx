@@ -132,7 +132,7 @@ const Home = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Eng ko'p sotilgan mahsulotlar */}
+          {/* Eng ko'p sotilgan mahsulotlar — 2 ustunli, 10 tagacha */}
           <div className="card px-6 py-6">
             <div className="flex items-center justify-between mb-4">
               <p className="tag-label">{t("home.topProducts")}</p>
@@ -141,36 +141,46 @@ const Home = () => {
             {data.topProducts.length === 0 ? (
               <p className="text-muted text-sm py-4 text-center">{t("home.noSales")}</p>
             ) : (
-              <div className="divide-y divide-sand">
-                {data.topProducts.map((p, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-3.5 transition-colors hover:bg-sand/20 -mx-2 px-2 rounded-tag"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-serif font-semibold ${
-                          i === 0
-                            ? "bg-terracotta text-paper"
-                            : i === 1
-                            ? "bg-terracotta/20 text-terracottaDark"
-                            : "bg-sand text-muted"
-                        }`}
-                      >
-                        {i + 1}
-                      </span>
-                      <span className="font-medium text-ink">{p.name}</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-ink font-medium">
-                        {p.quantity} {t("home.pcs")}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {p.revenue.toLocaleString()} {t("home.currency")}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="grid md:grid-cols-2 md:gap-x-8">
+                {[data.topProducts.slice(0, 5), data.topProducts.slice(5, 10)].map(
+                  (column, colIndex) =>
+                    column.length > 0 && (
+                      <div key={colIndex} className="divide-y divide-sand">
+                        {column.map((p, i) => {
+                          const rank = colIndex * 5 + i;
+                          return (
+                            <div
+                              key={rank}
+                              className="flex items-center justify-between py-3.5 transition-colors hover:bg-sand/20 -mx-2 px-2 rounded-tag"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span
+                                  className={`flex items-center justify-center w-7 h-7 shrink-0 rounded-full text-xs font-serif font-semibold ${
+                                    rank === 0
+                                      ? "bg-terracotta text-paper"
+                                      : rank === 1
+                                      ? "bg-terracotta/20 text-terracottaDark"
+                                      : "bg-sand text-muted"
+                                  }`}
+                                >
+                                  {rank + 1}
+                                </span>
+                                <span className="font-medium text-ink truncate">{p.name}</span>
+                              </div>
+                              <div className="text-right shrink-0 pl-3">
+                                <p className="text-sm text-ink font-medium">
+                                  {p.quantity} {t("home.pcs")}
+                                </p>
+                                <p className="text-xs text-muted">
+                                  {p.revenue.toLocaleString()} {t("home.currency")}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )
+                )}
               </div>
             )}
           </div>
