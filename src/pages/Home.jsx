@@ -4,29 +4,60 @@ import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 
-const StatCard = ({ label, value, icon, tone = "default" }) => {
-  const toneStyles = {
-    default: "border-l-4 border-l-sand",
-    accent: "border-l-4 border-l-terracotta bg-gradient-to-br from-terracotta/5 to-transparent",
-    olive: "border-l-4 border-l-olive",
-  };
+const TONES = {
+  accent: {
+    border: "border-l-terracotta",
+    iconBg: "bg-terracotta/15",
+    valueColor: "text-terracottaDark",
+    cardBg: "bg-gradient-to-br from-terracotta/5 to-transparent",
+  },
+  blue: {
+    border: "border-l-sky-400",
+    iconBg: "bg-sky-100",
+    valueColor: "text-sky-700",
+    cardBg: "",
+  },
+  green: {
+    border: "border-l-emerald-500",
+    iconBg: "bg-emerald-100",
+    valueColor: "text-emerald-700",
+    cardBg: "bg-emerald-50/40",
+  },
+  orange: {
+    border: "border-l-amber-500",
+    iconBg: "bg-amber-100",
+    valueColor: "text-amber-700",
+    cardBg: "bg-amber-50/40",
+  },
+  slate: {
+    border: "border-l-slate-400",
+    iconBg: "bg-slate-100",
+    valueColor: "text-ink",
+    cardBg: "",
+  },
+  teal: {
+    border: "border-l-teal-500",
+    iconBg: "bg-teal-100",
+    valueColor: "text-teal-700",
+    cardBg: "bg-teal-50/40",
+  },
+};
+
+const StatCard = ({ label, value, icon, tone = "slate" }) => {
+  const s = TONES[tone];
 
   return (
     <div
-      className={`card px-5 py-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${toneStyles[tone]}`}
+      className={`card px-5 py-4 border-l-4 ${s.border} ${s.cardBg} transition-all duration-200 hover:shadow-md hover:-translate-y-0.5`}
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="tag-label mb-1.5">{label}</p>
-          <p
-            className={`text-2xl font-serif font-semibold ${
-              tone === "accent" ? "text-terracottaDark" : "text-ink"
-            }`}
-          >
-            {value}
-          </p>
+          <p className={`text-2xl font-serif font-semibold ${s.valueColor}`}>{value}</p>
         </div>
-        <span className="text-xl opacity-70">{icon}</span>
+        <span className={`flex items-center justify-center w-9 h-9 rounded-full text-base ${s.iconBg}`}>
+          {icon}
+        </span>
       </div>
     </div>
   );
@@ -69,11 +100,11 @@ const Home = () => {
                 tone="accent"
               />
             </div>
-            <StatCard label={t("home.totalSold")} value={data.totalSoldItems} icon="📦" />
-            <StatCard label={t("home.completedOrders")} value={data.totalOrdersCompleted} icon="✅" tone="olive" />
-            <StatCard label={t("home.pendingOrders")} value={data.totalPendingOrders} icon="⏳" />
-            <StatCard label={t("home.totalProducts")} value={data.totalProducts} icon="🗂️" />
-            <StatCard label={t("home.activeProducts")} value={data.totalActiveProducts} icon="✨" tone="olive" />
+            <StatCard label={t("home.totalSold")} value={data.totalSoldItems} icon="📦" tone="blue" />
+            <StatCard label={t("home.completedOrders")} value={data.totalOrdersCompleted} icon="✅" tone="green" />
+            <StatCard label={t("home.pendingOrders")} value={data.totalPendingOrders} icon="⏳" tone="orange" />
+            <StatCard label={t("home.totalProducts")} value={data.totalProducts} icon="🗂️" tone="slate" />
+            <StatCard label={t("home.activeProducts")} value={data.totalActiveProducts} icon="✨" tone="teal" />
           </div>
 
           {/* Diagramma — o'zgartirilmagan, aynan avvalgidek */}
