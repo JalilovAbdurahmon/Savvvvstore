@@ -4,12 +4,33 @@ import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 
-const StatCard = ({ label, value, accent }) => (
-  <div className="card px-5 py-4">
-    <p className="tag-label mb-1.5">{label}</p>
-    <p className={`text-2xl font-serif font-semibold ${accent ? "text-terracottaDark" : "text-ink"}`}>{value}</p>
-  </div>
-);
+const StatCard = ({ label, value, icon, tone = "default" }) => {
+  const toneStyles = {
+    default: "border-l-4 border-l-sand",
+    accent: "border-l-4 border-l-terracotta bg-gradient-to-br from-terracotta/5 to-transparent",
+    olive: "border-l-4 border-l-olive",
+  };
+
+  return (
+    <div
+      className={`card px-5 py-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${toneStyles[tone]}`}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="tag-label mb-1.5">{label}</p>
+          <p
+            className={`text-2xl font-serif font-semibold ${
+              tone === "accent" ? "text-terracottaDark" : "text-ink"
+            }`}
+          >
+            {value}
+          </p>
+        </div>
+        <span className="text-xl opacity-70">{icon}</span>
+      </div>
+    </div>
+  );
+};
 
 const Home = () => {
   const [data, setData] = useState(null);
@@ -25,23 +46,42 @@ const Home = () => {
 
   return (
     <Layout title={t("home.title")} subtitle={t("home.subtitle")}>
-      {error && <p className="text-terracottaDark mb-4">{error}</p>}
+      {error && (
+        <p className="text-terracottaDark bg-terracotta/10 border border-terracotta/30 rounded-tag px-4 py-2.5 mb-6">
+          {error}
+        </p>
+      )}
 
       {!data ? (
-        <p className="tag-label">{t("home.loading")}</p>
+        <div className="flex items-center gap-2 tag-label py-8">
+          <span className="w-2 h-2 rounded-full bg-terracotta animate-pulse" />
+          {t("home.loading")}
+        </div>
       ) : (
         <>
+          {/* Asosiy statistika kartalari */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard label={t("home.totalRevenue")} value={`${data.totalRevenue.toLocaleString()} ${t("home.currency")}`} accent />
-            <StatCard label={t("home.totalSold")} value={data.totalSoldItems} />
-            <StatCard label={t("home.completedOrders")} value={data.totalOrdersCompleted} />
-            <StatCard label={t("home.pendingOrders")} value={data.totalPendingOrders} />
-            <StatCard label={t("home.totalProducts")} value={data.totalProducts} />
-            <StatCard label={t("home.activeProducts")} value={data.totalActiveProducts} />
+            <div className="col-span-2 md:col-span-1">
+              <StatCard
+                label={t("home.totalRevenue")}
+                value={`${data.totalRevenue.toLocaleString()} ${t("home.currency")}`}
+                icon="💰"
+                tone="accent"
+              />
+            </div>
+            <StatCard label={t("home.totalSold")} value={data.totalSoldItems} icon="📦" />
+            <StatCard label={t("home.completedOrders")} value={data.totalOrdersCompleted} icon="✅" tone="olive" />
+            <StatCard label={t("home.pendingOrders")} value={data.totalPendingOrders} icon="⏳" />
+            <StatCard label={t("home.totalProducts")} value={data.totalProducts} icon="🗂️" />
+            <StatCard label={t("home.activeProducts")} value={data.totalActiveProducts} icon="✨" tone="olive" />
           </div>
 
+          {/* Diagramma — o'zgartirilmagan, aynan avvalgidek */}
           <div className="card px-6 py-6 mb-8">
-            <p className="tag-label mb-4">{t("home.last7Days")}</p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="tag-label">{t("home.last7Days")}</p>
+              <span className="w-8 h-1 rounded-full bg-terracotta/60" />
+            </div>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={data.last7Days}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E7DCC9" />
@@ -61,21 +101,42 @@ const Home = () => {
             </ResponsiveContainer>
           </div>
 
+          {/* Eng ko'p sotilgan mahsulotlar */}
           <div className="card px-6 py-6">
-            <p className="tag-label mb-4">{t("home.topProducts")}</p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="tag-label">{t("home.topProducts")}</p>
+              <span className="w-8 h-1 rounded-full bg-olive/60" />
+            </div>
             {data.topProducts.length === 0 ? (
-              <p className="text-muted text-sm">{t("home.noSales")}</p>
+              <p className="text-muted text-sm py-4 text-center">{t("home.noSales")}</p>
             ) : (
               <div className="divide-y divide-sand">
                 {data.topProducts.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between py-3">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-3.5 transition-colors hover:bg-sand/20 -mx-2 px-2 rounded-tag"
+                  >
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-mono text-muted">{String(i + 1).padStart(2, "0")}</span>
+                      <span
+                        className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-serif font-semibold ${
+                          i === 0
+                            ? "bg-terracotta text-paper"
+                            : i === 1
+                            ? "bg-terracotta/20 text-terracottaDark"
+                            : "bg-sand text-muted"
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
                       <span className="font-medium text-ink">{p.name}</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-ink">{p.quantity} {t("home.pcs")}</p>
-                      <p className="text-xs text-muted">{p.revenue.toLocaleString()} {t("home.currency")}</p>
+                      <p className="text-sm text-ink font-medium">
+                        {p.quantity} {t("home.pcs")}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {p.revenue.toLocaleString()} {t("home.currency")}
+                      </p>
                     </div>
                   </div>
                 ))}
