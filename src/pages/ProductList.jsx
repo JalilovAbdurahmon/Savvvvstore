@@ -22,6 +22,46 @@ const TOAST_STYLE = {
   },
 };
 
+// Fullscreen image lightbox — click backdrop or the X to close
+const ImageLightbox = ({ src, alt, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M18 6L6 18M6 6l12 12"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      <img
+        src={src}
+        alt={alt}
+        onClick={(e) => e.stopPropagation()}
+        className="max-w-full max-h-full object-contain rounded-tag"
+      />
+    </div>
+  );
+};
+
 const EditModal = ({ product, onClose, onSaved }) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
@@ -178,6 +218,7 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
+  const [viewImage, setViewImage] = useState(null); // { src, alt } | null
   const { t } = useTranslation();
 
   const load = () => {
@@ -277,7 +318,12 @@ const ProductList = () => {
           {products.map((p) => (
             <div key={p._id} className="card overflow-hidden flex flex-col">
               <div className="relative">
-                <img src={`${API_ORIGIN}${p.image}`} alt={p.name} className="w-full h-40 object-cover" />
+                <img
+                  src={`${API_ORIGIN}${p.image}`}
+                  alt={p.name}
+                  onClick={() => setViewImage({ src: `${API_ORIGIN}${p.image}`, alt: p.name })}
+                  className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                />
                 {!p.isActive && (
                   <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-ink/70 text-paper px-2 py-1 rounded-tag">
                     {t("productList.hidden")}
@@ -306,6 +352,14 @@ const ProductList = () => {
       )}
 
       {editing && <EditModal product={editing} onClose={() => setEditing(null)} onSaved={handleSaved} />}
+
+      {viewImage && (
+        <ImageLightbox
+          src={viewImage.src}
+          alt={viewImage.alt}
+          onClose={() => setViewImage(null)}
+        />
+      )}
     </Layout>
   );
 };
