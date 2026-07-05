@@ -431,13 +431,13 @@ const EditModal = ({
             </div>
 
             <div>
-              <label className="tag-label text-[11px] block mb-1.5">
+              <label className="tag-label text-[12px] block mb-1.5">
                 {t("productList.modal.newImage")}{" "}
                 <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
               </label>
 
               {/* Hozirgi (eski) rasmlar — × bosilsa ro'yxatdan chiqadi */}
-              <p className="text-[16px] text-muted mb-1.5">
+              <p className="text-[15px] text-muted mb-1.5">
                 {t("productList.modal.currentImages")}:
               </p>
               <div className="flex items-center gap-3 flex-wrap mb-3">
