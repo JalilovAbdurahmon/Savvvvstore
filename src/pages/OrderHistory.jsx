@@ -126,10 +126,10 @@ const OrderHistory = () => {
     try {
       await api.delete(`/orders/${order._id}`);
       setOrders((prev) => prev.filter((o) => o._id !== order._id));
-      toast.success(t("orderHistory.deleteSuccess"));
+      toast.success(t("orderHistory.deleteSuccess"), { id: "order-delete-toast" });
     } catch (err) {
       setError(err.response?.data?.message || t("orderHistory.errorDelete"));
-      toast.error(err.response?.data?.message || t("orderHistory.errorDelete"));
+      toast.error(err.response?.data?.message || t("orderHistory.errorDelete"), { id: "order-delete-toast" });
     } finally {
       setDeletingId(null);
     }
