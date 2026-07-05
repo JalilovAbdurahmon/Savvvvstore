@@ -628,7 +628,7 @@ export default function MiniApp() {
                 setStep("location");
               }}
               disabled={cart.length === 0}
-              className="w-full bg-blacsdfsdfsdk text-white py-3 rounded-xl mt-3 font-medium disabled:opacity-50"
+              className="w-full bg-black text-white py-3 rounded-xl mt-3 font-medium disabled:opacity-50"
             >
               {tr.placeOrder}
             </button>
