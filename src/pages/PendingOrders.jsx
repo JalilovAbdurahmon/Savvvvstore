@@ -226,11 +226,14 @@ const PendingOrders = () => {
     try {
       await api.put(`/orders/${id}/cancel`);
       setOrders((prev) => prev.filter((o) => o._id !== id));
-      toast.success(t("pendingOrders.cancelSuccess"));
+      toast.success(t("pendingOrders.cancelSuccess"), {
+        id: "order-action-toast",
+      });
     } catch (err) {
       setError(err.response?.data?.message || t("pendingOrders.errorAction"));
       toast.error(
-        err.response?.data?.message || t("pendingOrders.errorAction")
+        err.response?.data?.message || t("pendingOrders.errorAction"),
+        { id: "order-action-toast" }
       );
     } finally {
       setBusyId(null);
