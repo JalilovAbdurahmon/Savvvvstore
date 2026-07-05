@@ -123,13 +123,20 @@ const AddProduct = () => {
     }
   };
 
+  // Tanlangan rasmni bekor qilish — refresh berish shart emas,
+  // shu zahoti "Выбрать изображение" orqali boshqasini tanlash mumkin bo'ladi
+  const removeImage = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    setImage(null);
+    setPreview(null);
+  };
+
   const resetForm = () => {
     setName("");
     setPrice("");
     setSizes([]);
     setDescription("");
-    setImage(null);
-    setPreview(null);
+    removeImage();
     setCategory(categories[0] || "");
   };
 
@@ -286,12 +293,25 @@ const AddProduct = () => {
             </label>
             <div className="flex items-center gap-4">
               {preview && (
-                <img
-                  src={preview}
-                  alt="preview"
-                  onClick={() => setShowImagePreview(true)}
-                  className="w-20 h-20 object-cover rounded-tag border border-sand cursor-pointer hover:opacity-80 transition-opacity"
-                />
+                <div className="relative w-20 h-20 shrink-0">
+                  <img
+                    src={preview}
+                    alt="preview"
+                    onClick={() => setShowImagePreview(true)}
+                    className="w-20 h-20 object-cover rounded-tag border border-sand cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeImage();
+                    }}
+                    aria-label="Remove image"
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-ink text-paper flex items-center justify-center text-xs leading-none shadow-md hover:bg-terracottaDark transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
               )}
               <label className="btn-secondary cursor-pointer">
                 {t("addProduct.chooseImage")}
