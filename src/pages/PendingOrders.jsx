@@ -22,16 +22,23 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-medium text-ink">
-            {order.firstName || t("pendingOrders.customer")} {order.username ? `(@${order.username})` : ""}
+            {order.firstName || t("pendingOrders.customer")}{" "}
+            {order.username ? `(@${order.username})` : ""}
           </p>
-          <p className="text-xs text-muted mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
+          <p className="text-xs text-muted mt-0.5">
+            {new Date(order.createdAt).toLocaleString()}
+          </p>
         </div>
-        <span className="status-pending text-xs px-2.5 py-1 rounded-tag font-medium">{t("pendingOrders.pending")}</span>
+        <span className="status-pending text-xs px-2.5 py-1 rounded-tag font-medium">
+          {t("pendingOrders.pending")}
+        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-ink/80 mb-3">
         {order.phone && (
-          <span className="inline-flex items-center gap-1.5">📞 {order.phone}</span>
+          <span className="inline-flex items-center gap-1.5">
+            📞 {order.phone}
+          </span>
         )}
         {order.address && (
           <a
@@ -50,7 +57,10 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
         {order.items.map((item, i) => {
           const imgSrc = getImageSrc(item.image);
           return (
-            <div key={i} className="flex items-center justify-between py-2 text-sm gap-2">
+            <div
+              key={i}
+              className="flex items-center justify-between py-2 text-sm gap-2"
+            >
               <div className="flex items-center gap-2.5 min-w-0">
                 {imgSrc ? (
                   <img
@@ -63,11 +73,13 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
                   <div className="w-10 h-10 rounded-md bg-sand shrink-0" />
                 )}
                 <span className="text-ink/90 truncate">
-                  {item.name} <span className="text-muted">({item.size})</span> × {item.quantity}
+                  {item.name} <span className="text-muted">({item.size})</span>{" "}
+                  × {item.quantity}
                 </span>
               </div>
               <span className="text-ink font-medium shrink-0">
-                {(item.price * item.quantity).toLocaleString()} {t("pendingOrders.currency")}
+                {(item.price * item.quantity).toLocaleString()}{" "}
+                {t("pendingOrders.currency")}
               </span>
             </div>
           );
@@ -102,14 +114,21 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
           onClick={() => setPreviewImg(null)}
         >
-          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="relative max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setPreviewImg(null)}
               className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors"
             >
               <X size={18} />
             </button>
-            <img src={previewImg} alt="" className="w-full max-h-[80vh] object-contain rounded-lg" />
+            <img
+              src={previewImg}
+              alt=""
+              className="w-full max-h-[80vh] object-contain rounded-lg"
+            />
           </div>
         </div>
       )}
@@ -123,11 +142,18 @@ const PendingOrders = () => {
   const [busyId, setBusyId] = useState(null);
   const { t } = useTranslation();
 
+  useEffect(() => {
+    toast.dismiss();
+    return () => toast.dismiss();
+  }, []);
+
   const load = () => {
     api
       .get("/orders")
       .then((res) => setOrders(res.data))
-      .catch((err) => setError(err.response?.data?.message || t("pendingOrders.errorLoad")));
+      .catch((err) =>
+        setError(err.response?.data?.message || t("pendingOrders.errorLoad"))
+      );
   };
 
   useEffect(load, []);
@@ -138,10 +164,15 @@ const PendingOrders = () => {
     try {
       await api.put(`/orders/${id}/complete`);
       setOrders((prev) => prev.filter((o) => o._id !== id));
-      toast.success(t("pendingOrders.completeSuccess"));
+      toast.success(t("pendingOrders.completeSuccess"), {
+        id: "order-action-toast",
+      });
     } catch (err) {
       setError(err.response?.data?.message || t("pendingOrders.errorAction"));
-      toast.error(err.response?.data?.message || t("pendingOrders.errorAction"));
+      toast.error(
+        err.response?.data?.message || t("pendingOrders.errorAction"),
+        { id: "order-action-toast" }
+      );
     } finally {
       setBusyId(null);
     }
@@ -159,8 +190,12 @@ const PendingOrders = () => {
             <CheckCircle2 size={16} className="text-emerald-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-ink">{t("pendingOrders.confirmCompleteTitle")}</p>
-            <p className="text-xs text-muted mt-0.5">{t("pendingOrders.confirmComplete")}</p>
+            <p className="text-sm font-semibold text-ink">
+              {t("pendingOrders.confirmCompleteTitle")}
+            </p>
+            <p className="text-xs text-muted mt-0.5">
+              {t("pendingOrders.confirmComplete")}
+            </p>
             <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={() => {
@@ -194,7 +229,9 @@ const PendingOrders = () => {
       toast.success(t("pendingOrders.cancelSuccess"));
     } catch (err) {
       setError(err.response?.data?.message || t("pendingOrders.errorAction"));
-      toast.error(err.response?.data?.message || t("pendingOrders.errorAction"));
+      toast.error(
+        err.response?.data?.message || t("pendingOrders.errorAction")
+      );
     } finally {
       setBusyId(null);
     }
@@ -212,8 +249,12 @@ const PendingOrders = () => {
             <AlertTriangle size={16} className="text-rose-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-ink">{t("pendingOrders.confirmCancelTitle")}</p>
-            <p className="text-xs text-muted mt-0.5">{t("pendingOrders.confirmCancel")}</p>
+            <p className="text-sm font-semibold text-ink">
+              {t("pendingOrders.confirmCancelTitle")}
+            </p>
+            <p className="text-xs text-muted mt-0.5">
+              {t("pendingOrders.confirmCancel")}
+            </p>
             <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={() => {
@@ -239,7 +280,10 @@ const PendingOrders = () => {
   };
 
   return (
-    <Layout title={t("pendingOrders.title")} subtitle={t("pendingOrders.subtitle", { count: orders.length })}>
+    <Layout
+      title={t("pendingOrders.title")}
+      subtitle={t("pendingOrders.subtitle", { count: orders.length })}
+    >
       {error && <p className="text-terracottaDark mb-4">{error}</p>}
 
       {orders.length === 0 ? (
