@@ -45,6 +45,12 @@ const TEXTS = {
   },
 };
 
+// Eski (nisbiy "/uploads/..") va yangi (to'liq Cloudinary "https://..") rasm formatlarini qo'llab-quvvatlaydi
+const getImageSrc = (image) => {
+  if (!image) return null;
+  return image.startsWith("http") ? image : `${API_ROOT}${image}`;
+};
+
 export default function MiniApp() {
   const lang = useMemo(getLangFromUrl, []);
   const tr = TEXTS[lang];
@@ -57,6 +63,7 @@ export default function MiniApp() {
   const [cart, setCart] = useState([]); // {productId, name, price, image, size, quantity}
   const [selectingProduct, setSelectingProduct] = useState(null); // size tanlash uchun
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null); // rasmni kattalashtirib ko'rish
 
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
 
@@ -173,23 +180,31 @@ export default function MiniApp() {
         <p className="text-center py-10 text-gray-400">{tr.notFound}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 p-3">
-          {products.map((p) => (
-            <div key={p._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <img src={`${API_ROOT}${p.image}`} alt={p.name} className="w-full h-32 object-cover" />
-              <div className="p-2">
-                <p className="text-sm font-medium truncate">{p.name}</p>
-                <p className="text-sm text-gray-600">
-                  {p.price.toLocaleString()} {tr.sum}
-                </p>
-                <button
-                  onClick={() => setSelectingProduct(p)}
-                  className="mt-2 w-full bg-black text-white text-xs py-1.5 rounded-lg"
-                >
-                  {tr.addToCart}
-                </button>
+          {products.map((p) => {
+            const imgSrc = getImageSrc(p.image);
+            return (
+              <div key={p._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <img
+                  src={imgSrc}
+                  alt={p.name}
+                  onClick={() => imgSrc && setPreviewImage(imgSrc)}
+                  className="w-full h-32 object-cover cursor-zoom-in active:opacity-80 transition-opacity"
+                />
+                <div className="p-2">
+                  <p className="text-sm font-medium truncate">{p.name}</p>
+                  <p className="text-sm text-gray-600">
+                    {p.price.toLocaleString()} {tr.sum}
+                  </p>
+                  <button
+                    onClick={() => setSelectingProduct(p)}
+                    className="mt-2 w-full bg-black text-white text-xs py-1.5 rounded-lg"
+                  >
+                    {tr.addToCart}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -261,6 +276,24 @@ export default function MiniApp() {
             >
               {tr.placeOrder}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Rasmni kattalashtirib ko'rsatish modali */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-40 p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg text-lg leading-none"
+            >
+              ×
+            </button>
+            <img src={previewImage} alt="" className="w-full max-h-[80vh] object-contain rounded-lg" />
           </div>
         </div>
       )}
