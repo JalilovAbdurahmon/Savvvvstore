@@ -70,11 +70,24 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
   const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
   const [image, setImage] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { t, i18n } = useTranslation();
 
   const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
+
+  // Yangi rasm tanlanganda preview URL yaratamiz, eski object URL'ni tozalaymiz
+  useEffect(() => {
+    if (!image) {
+      setImagePreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(image);
+    setImagePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image]);
 
   // Original snapshot so we can detect whether the user actually changed anything
   const original = {
@@ -226,7 +239,25 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
           </div>
           <div>
             <label className="tag-label block mb-1.5">{t("productList.modal.newImage")}</label>
-            <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} className="text-sm" />
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0] || null)}
+                className="text-sm flex-1"
+              />
+            </div>
+            {imagePreviewUrl && (
+              <div className="flex items-center gap-2.5 mt-2.5">
+                <img
+                  src={imagePreviewUrl}
+                  alt={image?.name}
+                  onClick={() => setShowImagePreview(true)}
+                  className="w-12 h-12 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                />
+                <span className="text-xs text-ink/70 truncate">{image?.name}</span>
+              </div>
+            )}
           </div>
           <label className="flex items-center gap-2 text-sm text-ink/80">
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
@@ -245,6 +276,14 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
           </div>
         </form>
       </div>
+
+      {showImagePreview && imagePreviewUrl && (
+        <ImageLightbox
+          src={imagePreviewUrl}
+          alt={image?.name}
+          onClose={() => setShowImagePreview(false)}
+        />
+      )}
     </div>
   );
 };
