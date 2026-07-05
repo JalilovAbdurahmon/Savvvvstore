@@ -4,7 +4,10 @@ import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 
-const API_ORIGIN = (import.meta.env.VITE_API_URL || "https://savvvvstore-backend-production.up.railway.app/api").replace(/\/api\/?$/, "");
+const API_ORIGIN = (
+  import.meta.env.VITE_API_URL ||
+  "https://savvvvstore-backend-production.up.railway.app/api"
+).replace(/\/api\/?$/, "");
 
 // Fixed display/save order for sizes — keep in sync with AddProduct.jsx
 const SIZE_ORDER = ["S", "M", "L", "XL"];
@@ -42,7 +45,13 @@ const ImageLightbox = ({ src, alt, onClose }) => {
         aria-label="Close"
         className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path
             d="M18 6L6 18M6 6l12 12"
             stroke="#fff"
@@ -62,7 +71,13 @@ const ImageLightbox = ({ src, alt, onClose }) => {
   );
 };
 
-const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved }) => {
+const EditModal = ({
+  product,
+  categories,
+  categoriesLoading,
+  onClose,
+  onSaved,
+}) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
   const [sizes, setSizes] = useState(sortSizes(product.sizes)); // endi array, tartiblangan
@@ -121,7 +136,10 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
     setError("");
 
     if (sizes.length === 0) {
-      const msg = t("productList.modal.errorNoSize", "Kamida bitta razmer tanlang");
+      const msg = t(
+        "productList.modal.errorNoSize",
+        "Kamida bitta razmer tanlang"
+      );
       setError(msg);
       toast.error(msg, TOAST_STYLE);
       return;
@@ -155,9 +173,16 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
         headers: { "Content-Type": "multipart/form-data" },
       });
       onSaved(res.data);
-      toast.success(t("productList.toast.updateSuccess", "Mahsulot muvaffaqiyatli yangilandi"), TOAST_STYLE);
+      toast.success(
+        t(
+          "productList.toast.updateSuccess",
+          "Mahsulot muvaffaqiyatli yangilandi"
+        ),
+        TOAST_STYLE
+      );
     } catch (err) {
-      const message = err.response?.data?.message || t("productList.modal.errorDefault");
+      const message =
+        err.response?.data?.message || t("productList.modal.errorDefault");
       setError(message);
       toast.error(message, TOAST_STYLE);
     } finally {
@@ -167,16 +192,33 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
 
   return (
     <>
-      <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4" onClick={onClose}>
-        <div className="card w-full max-w-md px-6 py-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <h3 className="text-xl font-serif font-semibold mb-5">{t("productList.modal.title")}</h3>
+      <div
+        className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4"
+        onClick={onClose}
+      >
+        <div
+          className="card w-full max-w-md px-6 py-6 max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-serif font-semibold mb-5">
+            {t("productList.modal.title")}
+          </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.name")}</label>
-              <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} required />
+              <label className="tag-label block mb-1.5">
+                {t("productList.modal.name")}
+              </label>
+              <input
+                className="input-field"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
             <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.price")}</label>
+              <label className="tag-label block mb-1.5">
+                {t("productList.modal.price")}
+              </label>
               <input
                 type="number"
                 className="input-field"
@@ -186,7 +228,9 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
               />
             </div>
             <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.category", "Kategoriya")}</label>
+              <label className="tag-label block mb-1.5">
+                {t("productList.modal.category", "Kategoriya")}
+              </label>
               <select
                 className="input-field"
                 value={category}
@@ -208,7 +252,9 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
               </select>
             </div>
             <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
+              <label className="tag-label block mb-1.5">
+                {t("productList.modal.sizes")}
+              </label>
               <div className="flex gap-2">
                 {SIZE_ORDER.map((size) => {
                   const active = sizes.includes(size);
@@ -231,7 +277,9 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
               </div>
             </div>
             <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.description")}</label>
+              <label className="tag-label block mb-1.5">
+                {t("productList.modal.description")}
+              </label>
               <textarea
                 className="input-field min-h-[70px] resize-none"
                 value={description}
@@ -239,39 +287,60 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
               />
             </div>
             <div>
-              <label className="tag-label block mb-1.5">{t("productList.modal.newImage")}</label>
+              <label className="tag-label block mb-1.5">
+                {t("productList.modal.newImage")}
+              </label>
               <div className="flex items-center gap-3">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImage(e.target.files[0] || null)}
-                  className="text-sm flex-1"
-                />
-              </div>
-              {imagePreviewUrl && (
-                <div className="flex items-center gap-2.5 mt-2.5">
-                  <img
-                    src={imagePreviewUrl}
-                    alt={image?.name}
-                    onClick={() => setShowImagePreview(true)}
-                    className="w-12 h-12 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                <label className="btn-secondary cursor-pointer shrink-0">
+                  {t("addProduct.chooseImage")}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImage(e.target.files[0] || null)}
+                    className="hidden"
                   />
-                  <span className="text-xs text-ink/70 truncate">{image?.name}</span>
-                </div>
-              )}
+                </label>
+                {imagePreviewUrl && (
+                  <>
+                    <img
+                      src={imagePreviewUrl}
+                      alt={image?.name}
+                      onClick={() => setShowImagePreview(true)}
+                      className="w-10 h-10 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                    />
+                    <span className="text-xs text-ink/70 truncate">
+                      {image?.name}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm text-ink/80">
-              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
               {t("productList.modal.visible")}
             </label>
 
             {error && <p className="text-sm text-terracottaDark">{error}</p>}
 
             <div className="flex gap-3 pt-2">
-              <button type="submit" disabled={loading} className="btn-primary flex-1">
-                {loading ? t("productList.modal.saving") : t("productList.modal.save")}
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary flex-1"
+              >
+                {loading
+                  ? t("productList.modal.saving")
+                  : t("productList.modal.save")}
               </button>
-              <button type="button" onClick={onClose} className="btn-secondary flex-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-secondary flex-1"
+              >
                 {t("productList.modal.cancel")}
               </button>
             </div>
@@ -303,7 +372,9 @@ const ProductList = () => {
     api
       .get("/products")
       .then((res) => setProducts(res.data))
-      .catch((err) => setError(err.response?.data?.message || t("productList.errorLoad")));
+      .catch((err) =>
+        setError(err.response?.data?.message || t("productList.errorLoad"))
+      );
   };
 
   useEffect(load, []);
@@ -328,9 +399,15 @@ const ProductList = () => {
     try {
       await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p._id !== id));
-      toast.success(t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"), TOAST_STYLE);
+      toast.success(
+        t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"),
+        TOAST_STYLE
+      );
     } catch (err) {
-      toast.error(err.response?.data?.message || t("productList.errorDelete"), TOAST_STYLE);
+      toast.error(
+        err.response?.data?.message || t("productList.errorDelete"),
+        TOAST_STYLE
+      );
     }
   };
 
@@ -339,7 +416,13 @@ const ProductList = () => {
       (tst) => (
         <div className="flex gap-3 items-start" style={{ minWidth: 260 }}>
           <div className="shrink-0 w-9 h-9 rounded-full bg-terracotta/15 flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z"
                 stroke="#B45F3A"
@@ -351,7 +434,10 @@ const ProductList = () => {
           </div>
           <div className="flex-1">
             <p className="font-semibold text-ink text-[15px] leading-snug">
-              {t("productList.toast.deleteConfirm", { name, defaultValue: `Удалить товар «${name}»?` })}
+              {t("productList.toast.deleteConfirm", {
+                name,
+                defaultValue: `Удалить товар «${name}»?`,
+              })}
             </p>
             <p className="text-xs text-muted mt-0.5">
               {t("productList.toast.deleteConfirmSubtitle")}
@@ -390,12 +476,17 @@ const ProductList = () => {
   };
 
   const handleSaved = (updated) => {
-    setProducts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)));
+    setProducts((prev) =>
+      prev.map((p) => (p._id === updated._id ? updated : p))
+    );
     setEditing(null);
   };
 
   return (
-    <Layout title={t("productList.title")} subtitle={t("productList.subtitle", { count: products.length })}>
+    <Layout
+      title={t("productList.title")}
+      subtitle={t("productList.subtitle", { count: products.length })}
+    >
       {error && <p className="text-terracottaDark mb-4">{error}</p>}
 
       {products.length === 0 ? (
@@ -408,7 +499,12 @@ const ProductList = () => {
                 <img
                   src={`${API_ORIGIN}${p.image}`}
                   alt={p.name}
-                  onClick={() => setViewImage({ src: `${API_ORIGIN}${p.image}`, alt: p.name })}
+                  onClick={() =>
+                    setViewImage({
+                      src: `${API_ORIGIN}${p.image}`,
+                      alt: p.name,
+                    })
+                  }
                   className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                 />
                 {!p.isActive && (
@@ -419,10 +515,17 @@ const ProductList = () => {
               </div>
               <div className="px-4 py-3 flex-1 flex flex-col">
                 <p className="font-medium text-ink truncate">{p.name}</p>
-                <p className="text-sm text-terracottaDark font-semibold mt-0.5">{p.price.toLocaleString()} {t("productList.currency")}</p>
-                <p className="text-xs text-muted mt-1">{sortSizes(p.sizes).join(" · ")}</p>
+                <p className="text-sm text-terracottaDark font-semibold mt-0.5">
+                  {p.price.toLocaleString()} {t("productList.currency")}
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  {sortSizes(p.sizes).join(" · ")}
+                </p>
                 <div className="flex gap-2 mt-auto pt-3">
-                  <button onClick={() => setEditing(p)} className="btn-secondary flex-1 text-xs py-1.5">
+                  <button
+                    onClick={() => setEditing(p)}
+                    className="btn-secondary flex-1 text-xs py-1.5"
+                  >
                     {t("productList.edit")}
                   </button>
                   <button
