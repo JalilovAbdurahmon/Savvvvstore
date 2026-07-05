@@ -3,6 +3,16 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import api from "../api/axios.js";
 
+// Leaflet'ning standart marker icon fayllari Vite kabi bundlerlarda nisbiy
+// yo'l bilan topilmay, "broken image" bo'lib chiqadi — shuning uchun CDN'dan
+// to'g'ridan-to'g'ri ishlatamiz
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
 const API_ROOT = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 const MAX_IMAGES = 3;
 
@@ -170,7 +180,8 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const tr = TEXTS[lang];
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
-  const [center, setCenter] = useState(null); // {lat, lng} — hozirgi pin markazi
+  const markerRef = useRef(null); // haqiqiy Leaflet marker — foydalanuvchi drag qilib to'g'rilaydi
+  const [center, setCenter] = useState(null); // {lat, lng} — markerning hozirgi joyi
   const [address, setAddress] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [locating, setLocating] = useState(true);
@@ -194,8 +205,12 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
     }
   };
 
-  const goToCoords = (lat, lng, zoom = 17) => {
-    mapRef.current?.setView([lat, lng], zoom);
+  // Markerni va xaritani berilgan koordinataga ko'chiradi — GPS topilganda
+  // ham, foydalanuvchi drag qilganda ham shu funksiya orqali holat yangilanadi
+  const moveTo = (lat, lng, { recenterMap = true, zoom = 17 } = {}) => {
+    markerRef.current?.setLatLng([lat, lng]);
+    if (recenterMap) mapRef.current?.setView([lat, lng], zoom);
+    setCenter({ lat, lng });
   };
 
   const detectGps = () => {
@@ -208,7 +223,7 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setDeniedNote(false);
-        goToCoords(pos.coords.latitude, pos.coords.longitude);
+        moveTo(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
       },
       () => {
@@ -219,7 +234,7 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
     );
   };
 
-  // Xaritani bir marta yaratamiz
+  // Xaritani va markerni bir marta yaratamiz
   useEffect(() => {
     const map = L.map(mapElRef.current, {
       center: [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng],
@@ -232,21 +247,34 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
     }).addTo(map);
     mapRef.current = map;
 
-    const updateCenter = () => {
-      const c = map.getCenter();
-      setCenter({ lat: c.lat, lng: c.lng });
-    };
-    map.on("moveend", updateCenter);
-    updateCenter();
+    // Haqiqiy, DRAG qilinadigan marker — aynan shu marker joylashuvi
+    // buyurtma manzili bo'ladi (ekran markazidagi "soxta" nuqta emas)
+    const marker = L.marker([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng], {
+      draggable: true,
+    }).addTo(map);
+    markerRef.current = marker;
 
-    // Ochilgach darhol GPS orqali joyni aniqlashga urinamiz
+    marker.on("dragend", () => {
+      const pos = marker.getLatLng();
+      setCenter({ lat: pos.lat, lng: pos.lng });
+    });
+
+    // Xaritaning bo'sh joyiga bosilganda ham marker o'sha yerga ko'chadi
+    map.on("click", (e) => {
+      moveTo(e.latlng.lat, e.latlng.lng, { recenterMap: false });
+    });
+
+    setCenter({ lat: DEFAULT_CENTER.lat, lng: DEFAULT_CENTER.lng });
+
+    // Ochilgach darhol GPS orqali joyni aniqlashga urinamiz —
+    // topilgach marker ANIQ shu koordinataga qo'yiladi va xarita ham shu yerga boradi
     detectGps();
 
     return () => map.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Pin markazi o'zgarganda (xarita surilganda yoki GPS topganda) manzil
+  // Marker joyi o'zgarganda (GPS topganda yoki drag/click qilinganda) manzil
   // matnini debounce bilan yangilaymiz
   useEffect(() => {
     if (!center) return;
@@ -265,12 +293,6 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
 
       <div className="relative flex-1">
         <div ref={mapElRef} className="absolute inset-0" />
-
-        {/* Markazda turadigan pin — xarita suriladi, pin doim ekran o'rtasida */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-10 flex flex-col items-center">
-          <div className="w-7 h-7 rounded-full bg-blue-600 border-[3px] border-white shadow-lg" />
-          <div className="w-1 h-4 bg-blue-600 -mt-0.5" />
-        </div>
 
         <button
           onClick={detectGps}
