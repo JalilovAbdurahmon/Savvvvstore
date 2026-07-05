@@ -17,11 +17,67 @@ import {
 
 const PAGE_SIZE = 4;
 
+const API_ORIGIN = (
+  import.meta.env.VITE_API_URL ||
+  "https://savvvvstore-backend-production.up.railway.app/api"
+).replace(/\/api\/?$/, "");
+
+const resolveImageSrc = (img) => {
+  if (!img) return null;
+  return img.startsWith("http") ? img : `${API_ORIGIN}${img}`;
+};
+
+const ImageLightbox = ({ src, alt, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6L6 18M6 6l12 12"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      <img
+        src={src}
+        alt={alt}
+        onClick={(e) => e.stopPropagation()}
+        className="max-w-full max-h-full object-contain rounded-tag"
+      />
+    </div>
+  );
+};
+
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewImage, setViewImage] = useState(null);
   const { t } = useTranslation();
 
   const statusStyles = {
@@ -60,7 +116,9 @@ const OrderHistory = () => {
   const openLocation = (order) => {
     if (!order.address) return;
     window.open(
-      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`,
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        order.address
+      )}`,
       "_blank",
       "noopener,noreferrer"
     );
@@ -122,11 +180,8 @@ const OrderHistory = () => {
     );
   };
 
-  // ---- Pagination logic ----
   const totalPages = Math.max(1, Math.ceil(orders.length / PAGE_SIZE));
 
-  // Agar joriy sahifadagi elementlar o'chirilib ketsa yoki yangi order kelib
-  // umumiy sahifalar soni kamaysa, currentPage ni chegaraga moslashtiramiz.
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -145,7 +200,6 @@ const OrderHistory = () => {
   };
 
   const getPageNumbers = () => {
-    // Ko'p sahifa bo'lsa ham max 5 ta tugma ko'rsatamiz
     const maxButtons = 5;
     let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
     let end = Math.min(totalPages, start + maxButtons - 1);
@@ -185,7 +239,6 @@ const OrderHistory = () => {
                   key={o._id}
                   className="card p-3.5 flex flex-col gap-2.5 hover:shadow-lg transition-shadow duration-200 border border-sand/60 relative"
                 >
-                  {/* Delete button */}
                   <button
                     onClick={() => handleDelete(o)}
                     disabled={deletingId === o._id}
@@ -195,7 +248,6 @@ const OrderHistory = () => {
                     <Trash2 size={14} />
                   </button>
 
-                  {/* Header: customer + status */}
                   <div className="flex items-start justify-between pr-7">
                     <div>
                       <p className="text-sm font-semibold text-ink">
@@ -204,6 +256,7 @@ const OrderHistory = () => {
                       {o.phone && (
                         <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted">
                           <Phone size={12} />
+
                           <a
                             href={`tel:${o.phone}`}
                             className="hover:text-terracottaDark transition-colors"
@@ -221,27 +274,50 @@ const OrderHistory = () => {
                     </span>
                   </div>
 
-                  {/* Products */}
                   <div className="border-t border-sand pt-2">
-                    <p className="tag-label text-[11px] text-muted mb-0.5">
+                    <p className="tag-label text-[11px] text-muted mb-1">
                       {t("orderHistory.products")}
                     </p>
-                    <p className="text-xs text-ink/80 leading-relaxed">
-                      {o.items.map((i) => `${i.name} (${i.size}) ×${i.quantity}`).join(", ")}
-                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {o.items.map((item, idx) => {
+                        const imgSrc = resolveImageSrc(item.image);
+                        const label =
+                          item.name + " (" + item.size + ") x" + item.quantity;
+                        return (
+                          <div key={idx} className="flex items-center gap-2">
+                            {imgSrc ? (
+                              <img
+                                src={imgSrc}
+                                alt={item.name}
+                                onClick={() =>
+                                  setViewImage({ src: imgSrc, alt: item.name })
+                                }
+                                className="w-8 h-8 rounded-md object-cover cursor-pointer border border-sand hover:opacity-80 transition-opacity flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-md bg-sand/60 flex items-center justify-center flex-shrink-0">
+                                <Package size={14} className="text-muted" />
+                              </div>
+                            )}
+                            <p className="text-xs text-ink/80 leading-relaxed">
+                              {label}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Amount */}
                   <div className="flex items-center justify-between">
                     <p className="tag-label text-[11px] text-muted">
                       {t("orderHistory.amount")}
                     </p>
                     <p className="text-base font-semibold text-ink">
-                      {o.totalPrice.toLocaleString()} {t("orderHistory.currency")}
+                      {o.totalPrice.toLocaleString()}{" "}
+                      {t("orderHistory.currency")}
                     </p>
                   </div>
 
-                  {/* Timestamps */}
                   <div className="grid grid-cols-2 gap-2 border-t border-sand pt-2 text-[11px]">
                     <div>
                       <p className="tag-label text-muted mb-0.5 flex items-center gap-1">
@@ -257,7 +333,6 @@ const OrderHistory = () => {
                     </div>
                   </div>
 
-                  {/* Location button */}
                   <div className="pt-0.5">
                     <button
                       onClick={() => openLocation(o)}
@@ -273,7 +348,6 @@ const OrderHistory = () => {
             })}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex flex-col items-center gap-3 mt-8">
               <div className="flex items-center gap-2">
@@ -343,6 +417,14 @@ const OrderHistory = () => {
             </div>
           )}
         </>
+      )}
+
+      {viewImage && (
+        <ImageLightbox
+          src={viewImage.src}
+          alt={viewImage.alt}
+          onClose={() => setViewImage(null)}
+        />
       )}
     </Layout>
   );
