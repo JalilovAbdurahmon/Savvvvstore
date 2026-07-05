@@ -1,8 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import api from "../api/axios.js";
 
 const API_ROOT = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 const MAX_IMAGES = 3;
+
+// Toshkent markazi — agar GPS berilmasa yoki ruxsat bermasa, xarita shu joydan boshlanadi
+const DEFAULT_CENTER = { lat: 41.311081, lng: 69.240562 };
 
 // Bot foydalanuvchi uchun tanlagan tilni ?lang= orqali yuboradi
 const getLangFromUrl = () => {
@@ -26,9 +31,17 @@ const TEXTS = {
     total: "Jami",
     sum: "so'm",
     checkoutNote:
-      "Buyurtma berish tugmasini bosgach, ism va telefon raqamingiz avtomatik olinadi, so'ngra bot sizdan yetkazib berish manzilini (lokatsiyani) so'raydi.",
+      "Buyurtma berish tugmasini bosgach, yetkazib berish manzilini xaritada tasdiqlaysiz.",
     placeOrder: "Buyurtma berish",
     telegramOnly: "Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.",
+    chooseLocation: "Manzilni tasdiqlang",
+    locating: "Joylashuv aniqlanmoqda...",
+    locationDenied:
+      "Joylashuvga ruxsat berilmadi. Xaritani qo'l bilan surib, kerakli joyni belgilang.",
+    yourAddress: "Manzil",
+    confirmLocation: "Bu manzilni tasdiqlash",
+    gpsButton: "Joylashuvimni aniqlash",
+    back: "Orqaga",
   },
   ru: {
     all: "Все",
@@ -40,9 +53,17 @@ const TEXTS = {
     total: "Итого",
     sum: "сум",
     checkoutNote:
-      "После нажатия кнопки заказа ваше имя и номер телефона будут получены автоматически, затем бот запросит у вас адрес доставки (геолокацию).",
+      "После нажатия кнопки заказа вы подтвердите адрес доставки на карте.",
     placeOrder: "Оформить заказ",
     telegramOnly: "Оформление заказа доступно только внутри Telegram.",
+    chooseLocation: "Подтвердите адрес",
+    locating: "Определяем местоположение...",
+    locationDenied:
+      "Доступ к геолокации не разрешён. Передвиньте карту вручную и выберите нужное место.",
+    yourAddress: "Адрес",
+    confirmLocation: "Подтвердить этот адрес",
+    gpsButton: "Определить моё местоположение",
+    back: "Назад",
   },
 };
 
@@ -140,6 +161,152 @@ const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
   );
 };
 
+// ---------------------------------------------------------------------------
+// Manzil tanlash ekrani (Yandex/2GIS uslubidagi "pin markazda turadi, xarita
+// pastda suriladi" pattern). Har chaqirilganda TOZA holatda ochiladi — hech
+// qanday oldingi manzil keshlanmaydi, har safar GPS'dan qaytadan aniqlanadi.
+// ---------------------------------------------------------------------------
+const LocationPicker = ({ lang, onBack, onConfirm }) => {
+  const tr = TEXTS[lang];
+  const mapElRef = useRef(null);
+  const mapRef = useRef(null);
+  const [center, setCenter] = useState(null); // {lat, lng} — hozirgi pin markazi
+  const [address, setAddress] = useState("");
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [locating, setLocating] = useState(true);
+  const [deniedNote, setDeniedNote] = useState(false);
+
+  // Reverse-geocoding: koordinatani o'qiladigan manzil matniga aylantirish
+  // (OpenStreetMap Nominatim — bepul, API key kerak emas, lekin production'da
+  // yuqori trafik bo'lsa o'z serveringizda kesh/proxy qilish tavsiya etiladi)
+  const fetchAddress = async (lat, lng) => {
+    setAddressLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=${lang}`
+      );
+      const data = await res.json();
+      setAddress(data?.display_name || "");
+    } catch {
+      setAddress("");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const goToCoords = (lat, lng, zoom = 17) => {
+    mapRef.current?.setView([lat, lng], zoom);
+  };
+
+  const detectGps = () => {
+    if (!navigator.geolocation) {
+      setLocating(false);
+      setDeniedNote(true);
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDeniedNote(false);
+        goToCoords(pos.coords.latitude, pos.coords.longitude);
+        setLocating(false);
+      },
+      () => {
+        setDeniedNote(true);
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
+
+  // Xaritani bir marta yaratamiz
+  useEffect(() => {
+    const map = L.map(mapElRef.current, {
+      center: [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng],
+      zoom: 15,
+      zoomControl: false,
+      attributionControl: false,
+    });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+    mapRef.current = map;
+
+    const updateCenter = () => {
+      const c = map.getCenter();
+      setCenter({ lat: c.lat, lng: c.lng });
+    };
+    map.on("moveend", updateCenter);
+    updateCenter();
+
+    // Ochilgach darhol GPS orqali joyni aniqlashga urinamiz
+    detectGps();
+
+    return () => map.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pin markazi o'zgarganda (xarita surilganda yoki GPS topganda) manzil
+  // matnini debounce bilan yangilaymiz
+  useEffect(() => {
+    if (!center) return;
+    const timer = setTimeout(() => fetchAddress(center.lat, center.lng), 500);
+    return () => clearTimeout(timer);
+  }, [center]);
+
+  return (
+    <div className="fixed inset-0 bg-white z-40 flex flex-col">
+      <div className="flex items-center gap-3 p-3 border-b shrink-0">
+        <button onClick={onBack} className="text-2xl leading-none px-1">
+          ‹
+        </button>
+        <p className="font-medium">{tr.chooseLocation}</p>
+      </div>
+
+      <div className="relative flex-1">
+        <div ref={mapElRef} className="absolute inset-0" />
+
+        {/* Markazda turadigan pin — xarita suriladi, pin doim ekran o'rtasida */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-10 flex flex-col items-center">
+          <div className="w-7 h-7 rounded-full bg-blue-600 border-[3px] border-white shadow-lg" />
+          <div className="w-1 h-4 bg-blue-600 -mt-0.5" />
+        </div>
+
+        <button
+          onClick={detectGps}
+          className="absolute bottom-4 right-3 w-11 h-11 rounded-full bg-white shadow-lg flex items-center justify-center text-lg z-10"
+          aria-label={tr.gpsButton}
+        >
+          📍
+        </button>
+
+        {locating && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full z-10 whitespace-nowrap">
+            {tr.locating}
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 border-t shrink-0 bg-white">
+        {deniedNote && (
+          <p className="text-xs text-amber-600 mb-2">{tr.locationDenied}</p>
+        )}
+        <p className="text-xs text-gray-400 mb-1">{tr.yourAddress}</p>
+        <p className="text-sm mb-3 min-h-[20px] line-clamp-2">
+          {addressLoading ? tr.loading : address || "—"}
+        </p>
+        <button
+          disabled={!center}
+          onClick={() => onConfirm({ ...center, address })}
+          className="w-full bg-black text-white py-3 rounded-xl font-medium disabled:opacity-50"
+        >
+          {tr.confirmLocation}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function MiniApp() {
   const lang = useMemo(getLangFromUrl, []);
   const tr = TEXTS[lang];
@@ -152,6 +319,8 @@ export default function MiniApp() {
   const [cart, setCart] = useState([]); // {productId, name, price, image, size, quantity}
   const [selectingProduct, setSelectingProduct] = useState(null); // size tanlash uchun
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // "shop" -> oddiy do'kon, "location" -> manzil tanlash ekrani
+  const [step, setStep] = useState("shop");
   // Lightbox: { images: string[], index: number, alt: string } | null
   const [previewImage, setPreviewImage] = useState(null);
 
@@ -217,13 +386,14 @@ export default function MiniApp() {
   const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
-  // Zakazni yakunlash: ism/telefon/manzil so'ramaymiz — ularni bot o'zi biladi
-  // (ism va telefon ro'yxatdan o'tishda saqlangan, manzil/lokatsiyani esa
-  // bot buyurtma tasdiqlangandan keyin so'raydi). Mini App faqat savat
-  // tarkibini botga yuboradi.
-  const submitOrder = () => {
-    if (cart.length === 0) return;
-
+  // Zakazni yakunlash: ism/telefon — bot tarafida ro'yxatdan o'tishda saqlangan,
+  // manzilni esa endi Mini App ichida (LocationPicker) foydalanuvchi o'zi
+  // xaritada tasdiqlaydi. Shu sababli items + location BIR PAKETDA botga
+  // yuboriladi — bot bilan alohida location almashinuvi endi kerak emas.
+  // Bu location HECH QAYERDA saqlanmaydi (localStorage/backend'ga yozilmaydi):
+  // har safar "Buyurtma berish" bosilganda LocationPicker toza holatda
+  // qaytadan ochiladi va GPS'dan qaytadan aniqlaydi.
+  const finalizeOrder = (location) => {
     if (!tg || typeof tg.sendData !== "function") {
       alert(tr.telegramOnly);
       return;
@@ -238,13 +408,28 @@ export default function MiniApp() {
         quantity: i.quantity,
         image: i.image,
       })),
+      location: {
+        latitude: location.lat,
+        longitude: location.lng,
+        address: location.address || "",
+      },
     };
 
-    // Bu ma'lumot botga "web_app_data" sifatida boradi, keyin bot
-    // lokatsiyani so'rab, zakazni yaratadi. Yuborilgandan keyin
-    // Telegram Mini App'ni avtomatik yopadi.
+    // Bu ma'lumot botga "web_app_data" sifatida boradi va bot darhol
+    // (qo'shimcha location so'ramasdan) zakazni yaratadi. Yuborilgandan
+    // keyin Telegram Mini App'ni avtomatik yopadi.
     tg.sendData(JSON.stringify(payload));
   };
+
+  if (step === "location") {
+    return (
+      <LocationPicker
+        lang={lang}
+        onBack={() => setStep("shop")}
+        onConfirm={(location) => finalizeOrder(location)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -369,7 +554,8 @@ export default function MiniApp() {
         </button>
       )}
 
-      {/* Checkout panel — endi faqat savat tarkibini ko'rsatadi, telefon/manzil so'ramaydi */}
+      {/* Checkout panel — items ro'yxati, "Buyurtma berish" bosilganda endi
+          location so'ramaydi/yubormaydi, aksincha LocationPicker ekraniga o'tadi */}
       {checkoutOpen && (
         <div
           className="fixed inset-0 bg-black/40 flex items-end z-30"
@@ -437,7 +623,10 @@ export default function MiniApp() {
             <p className="text-xs text-gray-400 mt-3">{tr.checkoutNote}</p>
 
             <button
-              onClick={submitOrder}
+              onClick={() => {
+                setCheckoutOpen(false);
+                setStep("location");
+              }}
               disabled={cart.length === 0}
               className="w-full bg-black text-white py-3 rounded-xl mt-3 font-medium disabled:opacity-50"
             >
