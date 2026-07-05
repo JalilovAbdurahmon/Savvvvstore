@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import api from "../api/axios.js";
 
 const API_ROOT = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
+const MAX_IMAGES = 3;
 
 // Bot foydalanuvchi uchun tanlagan tilni ?lang= orqali yuboradi
 const getLangFromUrl = () => {
@@ -51,6 +52,94 @@ const getImageSrc = (image) => {
   return image.startsWith("http") ? image : `${API_ROOT}${image}`;
 };
 
+// Mahsulotning barcha rasmlarini to'liq URL massiviga aylantiradi.
+// "images" massivi bo'lmasa (eski mahsulotlar), yagona "image" ishlatiladi.
+const getImageSrcList = (product) => {
+  const list =
+    product.images && product.images.length ? product.images : [product.image];
+  return list.map(getImageSrc).filter(Boolean);
+};
+
+// Fullscreen image lightbox — bir nechta rasm bo'lsa, chap/o'ng strelkalar
+// bilan aylanadi. Bu mobil ekran uchun mo'ljallangan: strelkalar rasmga
+// yaqin (kichik masofa bilan) joylashadi, noutbukdagi kabi katta bo'shliq yo'q.
+const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
+  const [index, setIndex] = useState(initialIndex);
+  const hasMultiple = images.length > 1;
+
+  useEffect(() => {
+    setIndex(initialIndex);
+  }, [initialIndex]);
+
+  const goPrev = (e) => {
+    e.stopPropagation();
+    setIndex((i) => (i - 1 + images.length) % images.length);
+  };
+  const goNext = (e) => {
+    e.stopPropagation();
+    setIndex((i) => (i + 1) % images.length);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-40 px-9 py-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative inline-block max-w-full max-h-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg text-lg leading-none z-20"
+        >
+          ×
+        </button>
+
+        <img
+          src={images[index]}
+          alt={alt}
+          className="max-w-full max-h-[80vh] object-contain rounded-lg block"
+        />
+
+        {hasMultiple && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full ${
+                  i === index ? "bg-white" : "bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {hasMultiple && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous image"
+            className="fixed top-1/2 -translate-y-1/2 left-1 w-9 h-9 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md z-20 text-lg"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next image"
+            className="fixed top-1/2 -translate-y-1/2 right-1 w-9 h-9 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md z-20 text-lg"
+          >
+            ›
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+
 export default function MiniApp() {
   const lang = useMemo(getLangFromUrl, []);
   const tr = TEXTS[lang];
@@ -63,7 +152,8 @@ export default function MiniApp() {
   const [cart, setCart] = useState([]); // {productId, name, price, image, size, quantity}
   const [selectingProduct, setSelectingProduct] = useState(null); // size tanlash uchun
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null); // rasmni kattalashtirib ko'rish
+  // Lightbox: { images: string[], index: number, alt: string } | null
+  const [previewImage, setPreviewImage] = useState(null);
 
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
 
@@ -191,18 +281,29 @@ export default function MiniApp() {
       ) : (
         <div className="grid grid-cols-2 gap-3 p-3">
           {products.map((p) => {
-            const imgSrc = getImageSrc(p.image);
+            const imgList = getImageSrcList(p);
+            const mainImg = imgList[0];
             return (
               <div
                 key={p._id}
                 className="bg-white rounded-xl shadow-sm overflow-hidden"
               >
-                <img
-                  src={imgSrc}
-                  alt={p.name}
-                  onClick={() => imgSrc && setPreviewImage(imgSrc)}
-                  className="w-full h-32 object-cover cursor-zoom-in active:opacity-80 transition-opacity"
-                />
+                <div className="relative">
+                  <img
+                    src={mainImg}
+                    alt={p.name}
+                    onClick={() =>
+                      mainImg &&
+                      setPreviewImage({ images: imgList, index: 0, alt: p.name })
+                    }
+                    className="w-full h-32 object-cover cursor-zoom-in active:opacity-80 transition-opacity"
+                  />
+                  {imgList.length > 1 && (
+                    <span className="absolute top-1.5 right-1.5 text-[10px] font-medium bg-white/90 text-black px-1.5 py-0.5 rounded-md shadow-sm">
+                      {imgList.length}/{MAX_IMAGES}
+                    </span>
+                  )}
+                </div>
                 <div className="p-2">
                   <p className="text-sm font-medium truncate">{p.name}</p>
                   <p className="text-sm text-gray-600">
@@ -291,7 +392,13 @@ export default function MiniApp() {
                       <img
                         src={imgSrc}
                         alt={i.name}
-                        onClick={() => setPreviewImage(imgSrc)}
+                        onClick={() =>
+                          setPreviewImage({
+                            images: [imgSrc],
+                            index: 0,
+                            alt: i.name,
+                          })
+                        }
                         className="w-10 h-10 rounded-lg object-cover shrink-0 cursor-zoom-in active:opacity-80 transition-opacity"
                       />
                     )}
@@ -340,29 +447,14 @@ export default function MiniApp() {
         </div>
       )}
 
-      {/* Rasmni kattalashtirib ko'rsatish modali */}
+      {/* Rasmni kattalashtirib ko'rsatish modali — bir nechta rasm bo'lsa navigatsiya bilan */}
       {previewImage && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-40 p-4"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div
-            className="relative w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg text-lg leading-none"
-            >
-              ×
-            </button>
-            <img
-              src={previewImage}
-              alt=""
-              className="w-full max-h-[80vh] object-contain rounded-lg"
-            />
-          </div>
-        </div>
+        <ImageLightbox
+          images={previewImage.images}
+          initialIndex={previewImage.index}
+          alt={previewImage.alt}
+          onClose={() => setPreviewImage(null)}
+        />
       )}
     </div>
   );
