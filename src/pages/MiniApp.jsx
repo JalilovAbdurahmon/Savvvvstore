@@ -46,8 +46,8 @@ const TEXTS = {
     telegramOnly: "Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.",
     chooseLocation: "Manzilni tasdiqlang",
     locating: "Joylashuv aniqlanmoqda...",
-    locationDenied:
-      "Joylashuvga ruxsat berilmadi. Xaritani qo'l bilan surib, kerakli joyni belgilang.",
+    locationWarning:
+      "GPS yoqilmagan bo'lishi mumkin. Iltimos, uni yoqing, aks holda joylashuvingiz noto'g'ri aniqlanishi mumkin.",
     yourAddress: "Manzil",
     confirmLocation: "Bu manzilni tasdiqlash",
     pinInstructionTitle: "Manzilni ko'rsating",
@@ -69,8 +69,8 @@ const TEXTS = {
     telegramOnly: "Оформление заказа доступно только внутри Telegram.",
     chooseLocation: "Подтвердите адрес",
     locating: "Определяем местоположение...",
-    locationDenied:
-      "Доступ к геолокации не разрешён. Передвиньте карту вручную и выберите нужное место.",
+    locationWarning:
+      "Возможно, GPS выключен. Пожалуйста, включите его, иначе местоположение может определиться неверно.",
     yourAddress: "Адрес",
     confirmLocation: "Подтвердить этот адрес",
     pinInstructionTitle: "Укажите адрес",
@@ -187,7 +187,7 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const [address, setAddress] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [locating, setLocating] = useState(true);
-  const [deniedNote, setDeniedNote] = useState(false);
+  const [locationWarning, setLocationWarning] = useState(false);
 
   // Reverse-geocoding: koordinatani o'qiladigan manzil matniga aylantirish
   // (OpenStreetMap Nominatim — bepul, API key kerak emas, lekin production'da
@@ -218,18 +218,21 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const detectGps = () => {
     if (!navigator.geolocation) {
       setLocating(false);
-      setDeniedNote(true);
+      setLocationWarning(true);
       return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setDeniedNote(false);
+        setLocationWarning(false);
         moveTo(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
       },
       () => {
-        setDeniedNote(true);
+        // Sabab qanday bo'lishidan qat'iy nazar (ruxsat berilmagan, GPS
+        // o'chiq, signal topilmadi) — brauzerning standart xabari o'rniga
+        // o'zimizning chiroyli, tilga mos ogohlantirishimizni ko'rsatamiz
+        setLocationWarning(true);
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -332,6 +335,20 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
           </p>
         </div>
 
+        {/* GPS bo'yicha chiroyli ogohlantirish — brauzerning standart
+            "ruxsat/rad" oynasi o'rniga, o'zimizning tilga mos bannerimiz */}
+        {locationWarning && !locating && (
+          <div
+            className="absolute top-[92px] left-3 right-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-md px-4 py-3 flex items-start gap-2.5"
+            style={{ zIndex: 29 }}
+          >
+            <span className="text-amber-500 text-base leading-none mt-0.5">⚠️</span>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              {tr.locationWarning}
+            </p>
+          </div>
+        )}
+
         {/* Zoom +/- tugmalari — o'ng tomonda, karta ustida */}
         <div
           className="absolute bottom-4 right-3 flex flex-col rounded-xl shadow-lg overflow-hidden bg-white"
@@ -356,9 +373,6 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
 
       {/* Pastdagi manzil karta — 1-2-rasmdagi uslubda: pin ikonka + manzil + koordinata + katta tugma */}
       <div className="p-4 border-t shrink-0 bg-white relative" style={{ zIndex: 30 }}>
-        {deniedNote && (
-          <p className="text-xs text-amber-600 mb-2">{tr.locationDenied}</p>
-        )}
         <div className="flex items-start gap-2.5 mb-4">
           <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
             <span className="text-blue-600 text-lg">📍</span>
