@@ -62,22 +62,26 @@ const ImageLightbox = ({ src, alt, onClose }) => {
   );
 };
 
-const EditModal = ({ product, onClose, onSaved }) => {
+const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved }) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
   const [sizes, setSizes] = useState(sortSizes(product.sizes)); // endi array, tartiblangan
+  const [category, setCategory] = useState(product.category || "");
   const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
 
   // Original snapshot so we can detect whether the user actually changed anything
   const original = {
     name: product.name,
     price: String(product.price),
     sizes: sortSizes(product.sizes).join(","),
+    category: product.category || "",
     description: product.description || "",
     isActive: product.isActive,
   };
@@ -86,6 +90,7 @@ const EditModal = ({ product, onClose, onSaved }) => {
     name !== original.name ||
     String(price) !== original.price ||
     sizes.join(",") !== original.sizes ||
+    category !== original.category ||
     description !== original.description ||
     isActive !== original.isActive ||
     image !== null;
@@ -109,6 +114,13 @@ const EditModal = ({ product, onClose, onSaved }) => {
       return;
     }
 
+    if (!category) {
+      const msg = t("productList.modal.errorNoCategory", "Kategoriya tanlang");
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
+      return;
+    }
+
     if (!hasChanges) {
       // Nothing changed — just close the modal, no request, no toast
       onClose();
@@ -119,6 +131,7 @@ const EditModal = ({ product, onClose, onSaved }) => {
     formData.append("name", name);
     formData.append("price", price);
     formData.append("sizes", JSON.stringify(sortSizes(sizes)));
+    formData.append("category", category);
     formData.append("description", description);
     formData.append("isActive", isActive);
     if (image) formData.append("image", image);
@@ -157,6 +170,28 @@ const EditModal = ({ product, onClose, onSaved }) => {
               onChange={(e) => setPrice(e.target.value)}
               required
             />
+          </div>
+          <div>
+            <label className="tag-label block mb-1.5">{t("productList.modal.category", "Kategoriya")}</label>
+            <select
+              className="input-field"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={categoriesLoading || categories.length === 0}
+              required
+            >
+              {categoriesLoading && (
+                <option value="">{t("addProduct.loadingCategories")}</option>
+              )}
+              {!categoriesLoading && categories.length === 0 && (
+                <option value="">{t("addProduct.noCategories")}</option>
+              )}
+              {categories.map((cat) => (
+                <option key={cat.key} value={cat.key}>
+                  {categoryLabel(cat)}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
@@ -219,6 +254,8 @@ const ProductList = () => {
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
   const [viewImage, setViewImage] = useState(null); // { src, alt } | null
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const { t } = useTranslation();
 
   const load = () => {
@@ -229,6 +266,15 @@ const ProductList = () => {
   };
 
   useEffect(load, []);
+
+  // Categorylarni bitta marta yuklaymiz, EditModal ochilganda qayta so'rov yubormasin uchun
+  useEffect(() => {
+    api
+      .get("/products/categories")
+      .then((res) => setCategories(res.data))
+      .catch(() => {})
+      .finally(() => setCategoriesLoading(false));
+  }, []);
 
   // Close any leftover confirm/toast when the page mounts or unmounts
   // (e.g. user navigated away with the delete-confirm toast still open)
@@ -351,7 +397,15 @@ const ProductList = () => {
         </div>
       )}
 
-      {editing && <EditModal product={editing} onClose={() => setEditing(null)} onSaved={handleSaved} />}
+      {editing && (
+        <EditModal
+          product={editing}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          onClose={() => setEditing(null)}
+          onSaved={handleSaved}
+        />
+      )}
 
       {viewImage && (
         <ImageLightbox
