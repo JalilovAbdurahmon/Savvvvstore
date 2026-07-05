@@ -3,7 +3,7 @@ import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
-import { CheckCircle2, AlertTriangle, MapPin } from "lucide-react";
+import { CheckCircle2, AlertTriangle, MapPin, X } from "lucide-react";
 
 const API_ROOT = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 
@@ -14,85 +14,108 @@ const getImageSrc = (image) => {
   return image.startsWith("http") ? image : `${API_ROOT}${image}`;
 };
 
-const OrderCard = ({ order, onComplete, onCancel, busy, t }) => (
-  <div className="card px-5 py-4">
-    <div className="flex items-start justify-between mb-3">
-      <div>
-        <p className="font-medium text-ink">
-          {order.firstName || t("pendingOrders.customer")} {order.username ? `(@${order.username})` : ""}
-        </p>
-        <p className="text-xs text-muted mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
+const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
+  const [previewImg, setPreviewImg] = useState(null);
+
+  return (
+    <div className="card px-5 py-4">
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <p className="font-medium text-ink">
+            {order.firstName || t("pendingOrders.customer")} {order.username ? `(@${order.username})` : ""}
+          </p>
+          <p className="text-xs text-muted mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
+        </div>
+        <span className="status-pending text-xs px-2.5 py-1 rounded-tag font-medium">{t("pendingOrders.pending")}</span>
       </div>
-      <span className="status-pending text-xs px-2.5 py-1 rounded-tag font-medium">{t("pendingOrders.pending")}</span>
-    </div>
 
-    <div className="flex flex-wrap items-center gap-2 text-sm text-ink/80 mb-3">
-      {order.phone && (
-        <span className="inline-flex items-center gap-1.5">📞 {order.phone}</span>
-      )}
-      {order.address && (
-        <a
-          href={order.address}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-tag px-2.5 py-1 hover:bg-sky-100 transition-colors"
-        >
-          <MapPin size={13} />
-          {t("pendingOrders.viewLocation")}
-        </a>
-      )}
-    </div>
+      <div className="flex flex-wrap items-center gap-2 text-sm text-ink/80 mb-3">
+        {order.phone && (
+          <span className="inline-flex items-center gap-1.5">📞 {order.phone}</span>
+        )}
+        {order.address && (
+          <a
+            href={order.address}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-tag px-2.5 py-1 hover:bg-sky-100 transition-colors"
+          >
+            <MapPin size={13} />
+            {t("pendingOrders.viewLocation")}
+          </a>
+        )}
+      </div>
 
-    <div className="divide-y divide-sand border-t border-sand">
-      {order.items.map((item, i) => {
-        const imgSrc = getImageSrc(item.image);
-        return (
-          <div key={i} className="flex items-center justify-between py-2 text-sm gap-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              {imgSrc ? (
-                <img
-                  src={imgSrc}
-                  alt={item.name}
-                  className="w-10 h-10 rounded-md object-cover border border-sand shrink-0"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-md bg-sand shrink-0" />
-              )}
-              <span className="text-ink/90 truncate">
-                {item.name} <span className="text-muted">({item.size})</span> × {item.quantity}
+      <div className="divide-y divide-sand border-t border-sand">
+        {order.items.map((item, i) => {
+          const imgSrc = getImageSrc(item.image);
+          return (
+            <div key={i} className="flex items-center justify-between py-2 text-sm gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={item.name}
+                    onClick={() => setPreviewImg(imgSrc)}
+                    className="w-10 h-10 rounded-md object-cover border border-sand shrink-0 cursor-zoom-in hover:opacity-80 transition-opacity"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-md bg-sand shrink-0" />
+                )}
+                <span className="text-ink/90 truncate">
+                  {item.name} <span className="text-muted">({item.size})</span> × {item.quantity}
+                </span>
+              </div>
+              <span className="text-ink font-medium shrink-0">
+                {(item.price * item.quantity).toLocaleString()} {t("pendingOrders.currency")}
               </span>
             </div>
-            <span className="text-ink font-medium shrink-0">
-              {(item.price * item.quantity).toLocaleString()} {t("pendingOrders.currency")}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-
-    <div className="flex items-center justify-between mt-3 pt-3 border-t border-sand">
-      <p className="font-serif font-semibold text-lg text-terracottaDark">
-        {order.totalPrice.toLocaleString()} {t("pendingOrders.currency")}
-      </p>
-      <div className="flex gap-2">
-        <button
-          disabled={busy}
-          onClick={() => onCancel(order._id)}
-          className="text-xs px-3 py-1.5 rounded-tag border border-ink/20 text-ink/70 hover:border-ink/40 transition-colors"
-        >
-          {t("pendingOrders.cancel")}
-        </button>
-        <button
-          disabled={busy}
-          onClick={() => onComplete(order._id)}
-          className="text-xs px-3.5 py-1.5 rounded-tag bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors disabled:opacity-60"
-        >
-          {t("pendingOrders.complete")}
-        </button>
+          );
+        })}
       </div>
+
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-sand">
+        <p className="font-serif font-semibold text-lg text-terracottaDark">
+          {order.totalPrice.toLocaleString()} {t("pendingOrders.currency")}
+        </p>
+        <div className="flex gap-2">
+          <button
+            disabled={busy}
+            onClick={() => onCancel(order._id)}
+            className="text-xs px-3 py-1.5 rounded-tag border border-ink/20 text-ink/70 hover:border-ink/40 transition-colors"
+          >
+            {t("pendingOrders.cancel")}
+          </button>
+          <button
+            disabled={busy}
+            onClick={() => onComplete(order._id)}
+            className="text-xs px-3.5 py-1.5 rounded-tag bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors disabled:opacity-60"
+          >
+            {t("pendingOrders.complete")}
+          </button>
+        </div>
+      </div>
+
+      {/* Rasmni kattalashtirib ko'rsatish modali */}
+      {previewImg && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewImg(null)}
+        >
+          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImg(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors"
+            >
+              <X size={18} />
+            </button>
+            <img src={previewImg} alt="" className="w-full max-h-[80vh] object-contain rounded-lg" />
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const PendingOrders = () => {
   const [orders, setOrders] = useState([]);
