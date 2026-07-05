@@ -437,8 +437,8 @@ const EditModal = ({
               </label>
 
               {/* Hozirgi (eski) rasmlar — × bosilsa ro'yxatdan chiqadi */}
-              <p className="text-[13px] text-muted mb-1.5">
-                {/* {t("productList.modal.currentImages")}: */}
+              <p className="text-[16px] text-muted mb-1.5">
+                {t("productList.modal.currentImages")}:
               </p>
               <div className="flex items-center gap-3 flex-wrap mb-3">
                 {keptImageUrls.map((src, idx) => (
