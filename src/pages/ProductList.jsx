@@ -211,10 +211,7 @@ const EditModal = ({
   const removeExistingImage = (index) => {
     if (totalCount <= 1) {
       toast.error(
-        t(
-          "productList.modal.errorMinImages",
-          "Kamida 1 ta rasm qolishi kerak"
-        ),
+        t("productList.modal.errorMinImages", "Kamida 1 ta rasm qolishi kerak"),
         TOAST_STYLE
       );
       return;
@@ -357,41 +354,45 @@ const EditModal = ({
                 required
               />
             </div>
-            <div>
-              <label className="tag-label block mb-1.5">
-                {t("productList.modal.price")}
-              </label>
-              <input
-                type="number"
-                className="input-field"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="tag-label block mb-1.5">
-                {t("productList.modal.category", "Kategoriya")}
-              </label>
-              <select
-                className="input-field"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                disabled={categoriesLoading || categories.length === 0}
-                required
-              >
-                {categoriesLoading && (
-                  <option value="">{t("addProduct.loadingCategories")}</option>
-                )}
-                {!categoriesLoading && categories.length === 0 && (
-                  <option value="">{t("addProduct.noCategories")}</option>
-                )}
-                {categories.map((cat) => (
-                  <option key={cat.key} value={cat.key}>
-                    {categoryLabel(cat)}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="tag-label block mb-1.5">
+                  {t("productList.modal.price")}
+                </label>
+                <input
+                  type="number"
+                  className="input-field"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="tag-label block mb-1.5">
+                  {t("productList.modal.category", "Kategoriya")}
+                </label>
+                <select
+                  className="input-field"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  disabled={categoriesLoading || categories.length === 0}
+                  required
+                >
+                  {categoriesLoading && (
+                    <option value="">
+                      {t("addProduct.loadingCategories")}
+                    </option>
+                  )}
+                  {!categoriesLoading && categories.length === 0 && (
+                    <option value="">{t("addProduct.noCategories")}</option>
+                  )}
+                  {categories.map((cat) => (
+                    <option key={cat.key} value={cat.key}>
+                      {categoryLabel(cat)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div>
               <label className="tag-label block mb-1.5">
@@ -611,10 +612,10 @@ const ProductList = () => {
         { ...TOAST_STYLE, id: DELETE_TOAST_ID }
       );
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || t("productList.errorDelete"),
-        { ...TOAST_STYLE, id: DELETE_TOAST_ID }
-      );
+      toast.error(err.response?.data?.message || t("productList.errorDelete"), {
+        ...TOAST_STYLE,
+        id: DELETE_TOAST_ID,
+      });
     }
   };
 
@@ -712,7 +713,11 @@ const ProductList = () => {
                     src={cardImages[0]}
                     alt={p.name}
                     onClick={() =>
-                      setViewImage({ images: cardImages, index: 0, alt: p.name })
+                      setViewImage({
+                        images: cardImages,
+                        index: 0,
+                        alt: p.name,
+                      })
                     }
                     className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                   />
