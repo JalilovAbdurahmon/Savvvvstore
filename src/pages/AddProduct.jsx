@@ -24,6 +24,8 @@ const sortSizes = (arr) =>
     (a, b) => AVAILABLE_SIZES.indexOf(a) - AVAILABLE_SIZES.indexOf(b)
   );
 
+const MAX_IMAGES = 3;
+
 // Fullscreen image lightbox — click backdrop or the X to close
 const ImageLightbox = ({ src, alt, onClose }) => {
   useEffect(() => {
@@ -79,9 +81,12 @@ const AddProduct = () => {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [showImagePreview, setShowImagePreview] = useState(false);
+
+  // Bir nechta rasm: images[0] — asosiy rasm (ProductList cardida ko'rinadigan)
+  const [images, setImages] = useState([]); // File[]
+  const [previews, setPreviews] = useState([]); // string[] (object URL'lar)
+  const [showImagePreview, setShowImagePreview] = useState(null); // index | null
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -89,7 +94,7 @@ const AddProduct = () => {
 
   useEffect(() => {
     api
-      .get("/products/categories") // <-- to'g'rilandi: "/meta/categories" emas
+      .get("/products/categories")
       .then((res) => {
         setCategories(res.data); // res.data = [{key, uz, ru}, ...]
         if (res.data.length > 0) setCategory((prev) => prev || res.data[0].key);
@@ -105,6 +110,13 @@ const AddProduct = () => {
     return () => toast.dismiss();
   }, []);
 
+  // Har bir "images" o'zgarganda preview URL'larni qayta yasaymiz, eskilarini tozalaymiz
+  useEffect(() => {
+    const urls = images.map((file) => URL.createObjectURL(file));
+    setPreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [images]);
+
   const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
 
   const toggleSize = (size) => {
@@ -115,20 +127,27 @@ const AddProduct = () => {
     );
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
+  // Fayllar tanlanganda — mavjudlarga qo'shamiz, MAX_IMAGES tadan oshirmaymiz
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const combined = [...images, ...files].slice(0, MAX_IMAGES);
+
+    if (images.length + files.length > MAX_IMAGES) {
+      toast.error(
+        t("addProduct.errorMaxImages", `Maksimal ${MAX_IMAGES} ta rasm yuklash mumkin`),
+        TOAST_STYLE
+      );
     }
+
+    setImages(combined);
+    // input'ni tozalaymiz — shu tufayli xuddi shu faylni yana tanlash mumkin bo'ladi
+    e.target.value = "";
   };
 
-  // Tanlangan rasmni bekor qilish — refresh berish shart emas,
-  // shu zahoti "Выбрать изображение" orqali boshqasini tanlash mumkin bo'ladi
-  const removeImage = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setImage(null);
-    setPreview(null);
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const resetForm = () => {
@@ -136,7 +155,7 @@ const AddProduct = () => {
     setPrice("");
     setSizes([]);
     setDescription("");
-    removeImage();
+    setImages([]);
     setCategory(categories[0] || "");
   };
 
@@ -144,7 +163,7 @@ const AddProduct = () => {
     e.preventDefault();
     setError("");
 
-    if (!image) {
+    if (images.length === 0) {
       const msg = t("addProduct.errorNoImage");
       setError(msg);
       toast.error(msg, TOAST_STYLE);
@@ -171,7 +190,7 @@ const AddProduct = () => {
     formData.append("category", category);
     formData.append("sizes", JSON.stringify(sortSizes(sizes)));
     formData.append("description", description);
-    formData.append("image", image);
+    images.forEach((file) => formData.append("images", file)); // backend "images" kutadi
 
     setLoading(true);
     try {
@@ -289,22 +308,28 @@ const AddProduct = () => {
 
           <div>
             <label className="tag-label block mb-2">
-              {t("addProduct.image")}
+              {t("addProduct.image")}{" "}
+              <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
             </label>
-            <div className="flex items-center gap-4">
-              {preview && (
-                <div className="relative w-20 h-20 shrink-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              {previews.map((url, idx) => (
+                <div key={idx} className="relative w-20 h-20 shrink-0">
                   <img
-                    src={preview}
-                    alt="preview"
-                    onClick={() => setShowImagePreview(true)}
+                    src={url}
+                    alt={images[idx]?.name}
+                    onClick={() => setShowImagePreview(idx)}
                     className="w-20 h-20 object-cover rounded-tag border border-sand cursor-pointer hover:opacity-80 transition-opacity"
                   />
+                  {idx === 0 && (
+                    <span className="absolute -top-1.5 -left-1.5 text-[9px] uppercase bg-terracotta text-white px-1.5 py-0.5 rounded-tag">
+                      {t("addProduct.mainImage", "Asosiy")}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeImage();
+                      removeImage(idx);
                     }}
                     aria-label="Remove image"
                     className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-ink text-paper flex items-center justify-center text-xs leading-none shadow-md hover:bg-terracottaDark transition-colors"
@@ -312,16 +337,19 @@ const AddProduct = () => {
                     ×
                   </button>
                 </div>
+              ))}
+              {images.length < MAX_IMAGES && (
+                <label className="btn-secondary cursor-pointer">
+                  {t("addProduct.chooseImage")}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImagesChange}
+                    className="hidden"
+                  />
+                </label>
               )}
-              <label className="btn-secondary cursor-pointer">
-                {t("addProduct.chooseImage")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
             </div>
           </div>
         </div>
@@ -337,11 +365,11 @@ const AddProduct = () => {
         </button>
       </form>
 
-      {showImagePreview && preview && (
+      {showImagePreview !== null && previews[showImagePreview] && (
         <ImageLightbox
-          src={preview}
-          alt={image?.name}
-          onClose={() => setShowImagePreview(false)}
+          src={previews[showImagePreview]}
+          alt={images[showImagePreview]?.name}
+          onClose={() => setShowImagePreview(null)}
         />
       )}
     </Layout>

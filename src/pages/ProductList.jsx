@@ -14,6 +14,8 @@ const SIZE_ORDER = ["S", "M", "L", "XL"];
 const sortSizes = (arr) =>
   [...arr].sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
 
+const MAX_IMAGES = 3;
+
 // Shared style for simple success/error toasts — wider, more breathing room, softer look
 const TOAST_STYLE = {
   style: {
@@ -26,7 +28,6 @@ const TOAST_STYLE = {
 };
 
 // Bir vaqtning o'zida faqat bitta "o'chirildi" toasti chiqishi uchun fixed id
-// (id bir xil bo'lsa, react-hot-toast eskisini yangisi bilan almashtiradi, ustma-ust qo'ymaydi)
 const DELETE_TOAST_ID = "product-delete-toast";
 
 // Fullscreen image lightbox — click backdrop or the X to close
@@ -79,6 +80,71 @@ const ImageLightbox = ({ src, alt, onClose }) => {
   );
 };
 
+// Bir nechta rasm bo'lsa strelkalar bilan aylanadigan carousel.
+// Faqat 1 ta rasm bo'lsa — strelkalar ko'rinadi, lekin bosilmaydi (cursor-not-allowed).
+const ImageCarousel = ({ images, alt, onImageClick, imgClassName }) => {
+  const [index, setIndex] = useState(0);
+  const hasMultiple = images.length > 1;
+
+  const goPrev = (e) => {
+    e.stopPropagation();
+    if (!hasMultiple) return;
+    setIndex((i) => (i - 1 + images.length) % images.length);
+  };
+  const goNext = (e) => {
+    e.stopPropagation();
+    if (!hasMultiple) return;
+    setIndex((i) => (i + 1) % images.length);
+  };
+
+  const arrowBase =
+    "absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-sm transition-colors z-10 text-base leading-none";
+  const arrowState = hasMultiple
+    ? "text-ink hover:bg-white cursor-pointer"
+    : "text-ink/30 cursor-not-allowed";
+
+  return (
+    <div className="relative">
+      <img
+        src={images[index]}
+        alt={alt}
+        onClick={() => onImageClick(index)}
+        className={imgClassName}
+      />
+      <button
+        type="button"
+        onClick={goPrev}
+        disabled={!hasMultiple}
+        aria-label="Previous image"
+        className={`${arrowBase} left-1.5 ${arrowState}`}
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        onClick={goNext}
+        disabled={!hasMultiple}
+        aria-label="Next image"
+        className={`${arrowBase} right-1.5 ${arrowState}`}
+      >
+        ›
+      </button>
+      {hasMultiple && (
+        <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1">
+          {images.map((_, i) => (
+            <span
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full ${
+                i === index ? "bg-white" : "bg-white/50"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const EditModal = ({
   product,
   categories,
@@ -88,29 +154,37 @@ const EditModal = ({
 }) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
-  const [sizes, setSizes] = useState(sortSizes(product.sizes)); // endi array, tartiblangan
+  const [sizes, setSizes] = useState(sortSizes(product.sizes)); // array, tartiblangan
   const [category, setCategory] = useState(product.category || "");
   const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
-  const [image, setImage] = useState(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
-  const [showImagePreview, setShowImagePreview] = useState(false);
+
+  // Mavjud (serverdagi) rasmlar — faqat ko'rish uchun
+  const existingImages = (
+    product.images && product.images.length
+      ? product.images
+      : [product.image]
+  ).map((img) => `${API_ORIGIN}${img}`);
+
+  // Yangi tanlangan rasmlar — bo'sh bo'lmasa, submitda ESKILARNI to'liq almashtiradi
+  const [newImages, setNewImages] = useState([]); // File[]
+  const [newPreviews, setNewPreviews] = useState([]); // string[]
+
+  // Lightbox: { type: "existing" | "new", index } | null
+  const [lightbox, setLightbox] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { t, i18n } = useTranslation();
 
   const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
 
-  // Yangi rasm tanlanganda preview URL yaratamiz, eski object URL'ni tozalaymiz
+  // Yangi tanlangan fayllar uchun preview URL yaratamiz, eskilarini tozalaymiz
   useEffect(() => {
-    if (!image) {
-      setImagePreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(image);
-    setImagePreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [image]);
+    const urls = newImages.map((file) => URL.createObjectURL(file));
+    setNewPreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [newImages]);
 
   // Original snapshot so we can detect whether the user actually changed anything
   const original = {
@@ -129,7 +203,7 @@ const EditModal = ({
     category !== original.category ||
     description !== original.description ||
     isActive !== original.isActive ||
-    image !== null;
+    newImages.length > 0;
 
   const toggleSize = (size) => {
     setSizes((prev) =>
@@ -137,6 +211,31 @@ const EditModal = ({
         ? prev.filter((s) => s !== size)
         : sortSizes([...prev, size])
     );
+  };
+
+  // Fayllar tanlanganda — mavjudlarga qo'shamiz, MAX_IMAGES tadan oshirmaymiz
+  const handleNewImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const combined = [...newImages, ...files].slice(0, MAX_IMAGES);
+
+    if (newImages.length + files.length > MAX_IMAGES) {
+      toast.error(
+        t(
+          "productList.modal.errorMaxImages",
+          `Maksimal ${MAX_IMAGES} ta rasm yuklash mumkin`
+        ),
+        TOAST_STYLE
+      );
+    }
+
+    setNewImages(combined);
+    e.target.value = "";
+  };
+
+  const removeNewImage = (index) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -173,7 +272,9 @@ const EditModal = ({
     formData.append("category", category);
     formData.append("description", description);
     formData.append("isActive", isActive);
-    if (image) formData.append("image", image);
+    if (newImages.length) {
+      newImages.forEach((file) => formData.append("images", file)); // backend "images" kutadi
+    }
 
     setLoading(true);
     try {
@@ -294,35 +395,75 @@ const EditModal = ({
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
+
             <div>
               <label className="tag-label block mb-1.5">
-                {t("productList.modal.newImage")}
+                {t("productList.modal.newImage")}{" "}
+                <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
               </label>
-              <div className="flex items-center gap-3">
-                <label className="btn-secondary cursor-pointer shrink-0">
-                  {t("addProduct.chooseImage")}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImage(e.target.files[0] || null)}
-                    className="hidden"
+
+              {/* Hozirgi rasmlar */}
+              <p className="text-xs text-muted mb-1.5">
+                {t("productList.modal.currentImages", "Hozirgi rasmlar")}:
+              </p>
+              <div className="flex gap-2 mb-3">
+                {existingImages.map((src, idx) => (
+                  <img
+                    key={idx}
+                    src={src}
+                    alt={`${product.name} ${idx + 1}`}
+                    onClick={() => setLightbox({ type: "existing", index: idx })}
+                    className="w-14 h-14 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
                   />
-                </label>
-                {imagePreviewUrl && (
-                  <>
+                ))}
+              </div>
+
+              {newImages.length > 0 && (
+                <p className="text-xs text-terracottaDark mb-1.5">
+                  {t(
+                    "productList.modal.replaceWarning",
+                    "Yangi rasm tanlansangiz, eski rasmlarning barchasi almashtiriladi"
+                  )}
+                </p>
+              )}
+
+              <div className="flex items-center gap-3 flex-wrap">
+                {newPreviews.map((url, idx) => (
+                  <div key={idx} className="relative w-14 h-14 shrink-0">
                     <img
-                      src={imagePreviewUrl}
-                      alt={image?.name}
-                      onClick={() => setShowImagePreview(true)}
-                      className="w-10 h-10 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                      src={url}
+                      alt={newImages[idx]?.name}
+                      onClick={() => setLightbox({ type: "new", index: idx })}
+                      className="w-14 h-14 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
                     />
-                    <span className="text-xs text-ink/70 truncate">
-                      {image?.name}
-                    </span>
-                  </>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeNewImage(idx);
+                      }}
+                      aria-label="Remove image"
+                      className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-ink text-paper flex items-center justify-center text-[10px] leading-none shadow-md hover:bg-terracottaDark transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {newImages.length < MAX_IMAGES && (
+                  <label className="btn-secondary cursor-pointer shrink-0">
+                    {t("addProduct.chooseImage")}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleNewImagesChange}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
             </div>
+
             <label className="flex items-center gap-2 text-sm text-ink/80">
               <input
                 type="checkbox"
@@ -356,11 +497,19 @@ const EditModal = ({
         </div>
       </div>
 
-      {showImagePreview && imagePreviewUrl && (
+      {lightbox && (
         <ImageLightbox
-          src={imagePreviewUrl}
-          alt={image?.name}
-          onClose={() => setShowImagePreview(false)}
+          src={
+            lightbox.type === "existing"
+              ? existingImages[lightbox.index]
+              : newPreviews[lightbox.index]
+          }
+          alt={
+            lightbox.type === "existing"
+              ? `${product.name} ${lightbox.index + 1}`
+              : newImages[lightbox.index]?.name
+          }
+          onClose={() => setLightbox(null)}
         />
       )}
     </>
@@ -397,8 +546,6 @@ const ProductList = () => {
   }, []);
 
   // Close any leftover confirm/toast when the page mounts or unmounts
-  // (e.g. user navigated away with the delete-confirm toast still open,
-  // yoki boshqa sahifaga o'tganda ochiq qolgan "o'chirildi" toasti ham darhol yopiladi)
   useEffect(() => {
     toast.dismiss();
     return () => toast.dismiss();
@@ -408,8 +555,6 @@ const ProductList = () => {
     try {
       await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p._id !== id));
-      // id bir xil bo'lgani uchun, ketma-ket bir necha marta o'chirilsa ham
-      // toastlar ustma-ust to'planmaydi — har safar avvalgisi yangisi bilan almashadi
       toast.success(
         t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"),
         { ...TOAST_STYLE, id: DELETE_TOAST_ID }
@@ -504,51 +649,54 @@ const ProductList = () => {
         <p className="text-muted">{t("productList.empty")}</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {products.map((p) => (
-            <div key={p._id} className="card overflow-hidden flex flex-col">
-              <div className="relative">
-                <img
-                  src={`${API_ORIGIN}${p.image}`}
-                  alt={p.name}
-                  onClick={() =>
-                    setViewImage({
-                      src: `${API_ORIGIN}${p.image}`,
-                      alt: p.name,
-                    })
-                  }
-                  className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                />
-                {!p.isActive && (
-                  <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-ink/70 text-paper px-2 py-1 rounded-tag">
-                    {t("productList.hidden")}
-                  </span>
-                )}
-              </div>
-              <div className="px-4 py-3 flex-1 flex flex-col">
-                <p className="font-medium text-ink truncate">{p.name}</p>
-                <p className="text-sm text-terracottaDark font-semibold mt-0.5">
-                  {p.price.toLocaleString()} {t("productList.currency")}
-                </p>
-                <p className="text-xs text-muted mt-1">
-                  {sortSizes(p.sizes).join(" · ")}
-                </p>
-                <div className="flex gap-2 mt-auto pt-3">
-                  <button
-                    onClick={() => setEditing(p)}
-                    className="btn-secondary flex-1 text-xs py-1.5"
-                  >
-                    {t("productList.edit")}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(p._id, p.name)}
-                    className="flex-1 text-xs py-1.5 rounded-tag border border-terracotta/40 text-terracottaDark hover:bg-terracotta/10 transition-colors"
-                  >
-                    {t("productList.delete")}
-                  </button>
+          {products.map((p) => {
+            const cardImages = (
+              p.images && p.images.length ? p.images : [p.image]
+            ).map((img) => `${API_ORIGIN}${img}`);
+
+            return (
+              <div key={p._id} className="card overflow-hidden flex flex-col">
+                <div className="relative">
+                  <ImageCarousel
+                    images={cardImages}
+                    alt={p.name}
+                    onImageClick={(idx) =>
+                      setViewImage({ src: cardImages[idx], alt: p.name })
+                    }
+                    imgClassName="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  />
+                  {!p.isActive && (
+                    <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-ink/70 text-paper px-2 py-1 rounded-tag">
+                      {t("productList.hidden")}
+                    </span>
+                  )}
+                </div>
+                <div className="px-4 py-3 flex-1 flex flex-col">
+                  <p className="font-medium text-ink truncate">{p.name}</p>
+                  <p className="text-sm text-terracottaDark font-semibold mt-0.5">
+                    {p.price.toLocaleString()} {t("productList.currency")}
+                  </p>
+                  <p className="text-xs text-muted mt-1">
+                    {sortSizes(p.sizes).join(" · ")}
+                  </p>
+                  <div className="flex gap-2 mt-auto pt-3">
+                    <button
+                      onClick={() => setEditing(p)}
+                      className="btn-secondary flex-1 text-xs py-1.5"
+                    >
+                      {t("productList.edit")}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p._id, p.name)}
+                      className="flex-1 text-xs py-1.5 rounded-tag border border-terracotta/40 text-terracottaDark hover:bg-terracotta/10 transition-colors"
+                    >
+                      {t("productList.delete")}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
