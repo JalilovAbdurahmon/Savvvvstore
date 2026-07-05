@@ -91,6 +91,11 @@ const OrderHistory = () => {
   };
 
   useEffect(() => {
+    toast.dismiss();
+    return () => toast.dismiss();
+  }, []);
+
+  useEffect(() => {
     api
       .get("/orders/history")
       .then((res) => setOrders(res.data))
