@@ -210,11 +210,20 @@ export default function MiniApp() {
 
       {/* O'lcham tanlash modal */}
       {selectingProduct && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-20" onClick={() => setSelectingProduct(null)}>
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelectingProduct(null)}>
           <div className="bg-white w-full rounded-t-2xl p-4" onClick={(e) => e.stopPropagation()}>
-            <p className="font-medium mb-3">
-              {selectingProduct.name} — {tr.chooseSize}
-            </p>
+            <div className="flex items-center gap-3 mb-3">
+              {getImageSrc(selectingProduct.image) && (
+                <img
+                  src={getImageSrc(selectingProduct.image)}
+                  alt={selectingProduct.name}
+                  className="w-12 h-12 rounded-lg object-cover shrink-0"
+                />
+              )}
+              <p className="font-medium">
+                {selectingProduct.name} — {tr.chooseSize}
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               {selectingProduct.sizes.map((s) => (
                 <button
@@ -230,8 +239,8 @@ export default function MiniApp() {
         </div>
       )}
 
-      {/* Savat tugmasi (pastda) */}
-      {cartCount > 0 && !checkoutOpen && (
+      {/* Savat tugmasi (pastda) — o'lcham tanlash oynasi ochiq bo'lganda yashiriladi, ustiga chiqib qolmasligi uchun */}
+      {cartCount > 0 && !checkoutOpen && !selectingProduct && (
         <button
           onClick={() => setCheckoutOpen(true)}
           className="fixed bottom-4 left-4 right-4 bg-black text-white py-3 rounded-xl font-medium z-20"
