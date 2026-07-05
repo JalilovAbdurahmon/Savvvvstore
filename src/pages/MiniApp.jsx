@@ -254,23 +254,36 @@ export default function MiniApp() {
         <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setCheckoutOpen(false)}>
           <div className="bg-white w-full rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <p className="font-semibold mb-3">{tr.cart}</p>
-            {cart.map((i) => (
-              <div key={i.productId + i.size} className="flex items-center justify-between py-2 border-b">
-                <div>
-                  <p className="text-sm">
-                    {i.name} ({i.size})
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {i.price.toLocaleString()} {tr.sum}
-                  </p>
+            {cart.map((i) => {
+              const imgSrc = getImageSrc(i.image);
+              return (
+                <div key={i.productId + i.size} className="flex items-center justify-between py-2 border-b">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {imgSrc && (
+                      <img
+                        src={imgSrc}
+                        alt={i.name}
+                        onClick={() => setPreviewImage(imgSrc)}
+                        className="w-10 h-10 rounded-lg object-cover shrink-0 cursor-zoom-in active:opacity-80 transition-opacity"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm truncate">
+                        {i.name} ({i.size})
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {i.price.toLocaleString()} {tr.sum}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => changeQty(i.productId, i.size, -1)} className="w-6 h-6 border rounded">-</button>
+                    <span>{i.quantity}</span>
+                    <button onClick={() => changeQty(i.productId, i.size, 1)} className="w-6 h-6 border rounded">+</button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => changeQty(i.productId, i.size, -1)} className="w-6 h-6 border rounded">-</button>
-                  <span>{i.quantity}</span>
-                  <button onClick={() => changeQty(i.productId, i.size, 1)} className="w-6 h-6 border rounded">+</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             <p className="text-right font-semibold mt-3">
               {tr.total}: {total.toLocaleString()} {tr.sum}
