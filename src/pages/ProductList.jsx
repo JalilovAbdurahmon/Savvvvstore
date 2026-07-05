@@ -16,7 +16,7 @@ const sortSizes = (arr) =>
 
 const MAX_IMAGES = 3;
 
-// Shared style for simple success/error toasts — wider, more breathing room, softer look
+// Shared style for simple success/error toasts
 const TOAST_STYLE = {
   style: {
     padding: "14px 20px",
@@ -27,40 +27,59 @@ const TOAST_STYLE = {
   },
 };
 
-// Bir vaqtning o'zida faqat bitta "o'chirildi" toasti chiqishi uchun fixed id
 const DELETE_TOAST_ID = "product-delete-toast";
 
-// Fullscreen image lightbox — click backdrop or the X to close
-const ImageLightbox = ({ src, alt, onClose }) => {
+// Fullscreen image lightbox — bir nechta rasm bo'lsa, chap/o'ng strelkalar
+// aynan rasmning o'zining chetiga (kichik margin bilan) joylashadi,
+// chunki wrapper "inline-block" bo'lib rasmning haqiqiy o'lchamiga yopishadi.
+const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
+  const [index, setIndex] = useState(initialIndex);
+  const hasMultiple = images.length > 1;
+
+  useEffect(() => {
+    setIndex(initialIndex);
+  }, [initialIndex]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && hasMultiple) {
+        setIndex((i) => (i - 1 + images.length) % images.length);
+      }
+      if (e.key === "ArrowRight" && hasMultiple) {
+        setIndex((i) => (i + 1) % images.length);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, hasMultiple, images.length]);
+
+  const goPrev = (e) => {
+    e.stopPropagation();
+    setIndex((i) => (i - 1 + images.length) % images.length);
+  };
+  const goNext = (e) => {
+    e.stopPropagation();
+    setIndex((i) => (i + 1) % images.length);
+  };
 
   return (
     <div
       className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
       onClick={onClose}
     >
+      {/* inline-block wrapper — aynan rasm o'lchamiga yopishadi, shu bilan
+          strelkalar rasm chetiga nisbatan joylashadi, ekran chetiga emas */}
       <div
-        className="relative max-w-full max-h-full"
+        className="relative inline-block max-w-full max-h-full"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors z-10"
+          className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors z-20"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
               d="M18 6L6 18M6 6l12 12"
               stroke="currentColor"
@@ -70,77 +89,44 @@ const ImageLightbox = ({ src, alt, onClose }) => {
             />
           </svg>
         </button>
+
         <img
-          src={src}
+          src={images[index]}
           alt={alt}
-          className="max-w-full max-h-[85vh] object-contain rounded-tag"
+          className="block max-w-full max-h-[85vh] object-contain rounded-tag"
         />
+
+        {hasMultiple && (
+          <>
+            <button
+              type="button"
+              onClick={goPrev}
+              aria-label="Previous image"
+              className="absolute top-1/2 -translate-y-1/2 left-3 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label="Next image"
+              className="absolute top-1/2 -translate-y-1/2 right-3 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
+            >
+              ›
+            </button>
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    i === index ? "bg-white" : "bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
-    </div>
-  );
-};
-
-// Bir nechta rasm bo'lsa strelkalar bilan aylanadigan carousel.
-// Faqat 1 ta rasm bo'lsa — strelkalar ko'rinadi, lekin bosilmaydi (cursor-not-allowed).
-const ImageCarousel = ({ images, alt, onImageClick, imgClassName }) => {
-  const [index, setIndex] = useState(0);
-  const hasMultiple = images.length > 1;
-
-  const goPrev = (e) => {
-    e.stopPropagation();
-    if (!hasMultiple) return;
-    setIndex((i) => (i - 1 + images.length) % images.length);
-  };
-  const goNext = (e) => {
-    e.stopPropagation();
-    if (!hasMultiple) return;
-    setIndex((i) => (i + 1) % images.length);
-  };
-
-  const arrowBase =
-    "absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-sm transition-colors z-10 text-base leading-none";
-  const arrowState = hasMultiple
-    ? "text-ink hover:bg-white cursor-pointer"
-    : "text-ink/30 cursor-not-allowed";
-
-  return (
-    <div className="relative">
-      <img
-        src={images[index]}
-        alt={alt}
-        onClick={() => onImageClick(index)}
-        className={imgClassName}
-      />
-      <button
-        type="button"
-        onClick={goPrev}
-        disabled={!hasMultiple}
-        aria-label="Previous image"
-        className={`${arrowBase} left-1.5 ${arrowState}`}
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        onClick={goNext}
-        disabled={!hasMultiple}
-        aria-label="Next image"
-        className={`${arrowBase} right-1.5 ${arrowState}`}
-      >
-        ›
-      </button>
-      {hasMultiple && (
-        <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1">
-          {images.map((_, i) => (
-            <span
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full ${
-                i === index ? "bg-white" : "bg-white/50"
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
@@ -154,23 +140,21 @@ const EditModal = ({
 }) => {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price);
-  const [sizes, setSizes] = useState(sortSizes(product.sizes)); // array, tartiblangan
+  const [sizes, setSizes] = useState(sortSizes(product.sizes));
   const [category, setCategory] = useState(product.category || "");
   const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
 
-  // Mavjud (serverdagi) rasmlar — faqat ko'rish uchun
   const existingImages = (
     product.images && product.images.length
       ? product.images
       : [product.image]
   ).map((img) => `${API_ORIGIN}${img}`);
 
-  // Yangi tanlangan rasmlar — bo'sh bo'lmasa, submitda ESKILARNI to'liq almashtiradi
-  const [newImages, setNewImages] = useState([]); // File[]
-  const [newPreviews, setNewPreviews] = useState([]); // string[]
+  const [newImages, setNewImages] = useState([]);
+  const [newPreviews, setNewPreviews] = useState([]);
 
-  // Lightbox: { type: "existing" | "new", index } | null
+  // Lightbox: { images: string[], index: number, alt: string } | null
   const [lightbox, setLightbox] = useState(null);
 
   const [loading, setLoading] = useState(false);
@@ -179,14 +163,12 @@ const EditModal = ({
 
   const categoryLabel = (cat) => cat[i18n.language] || cat.uz;
 
-  // Yangi tanlangan fayllar uchun preview URL yaratamiz, eskilarini tozalaymiz
   useEffect(() => {
     const urls = newImages.map((file) => URL.createObjectURL(file));
     setNewPreviews(urls);
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, [newImages]);
 
-  // Original snapshot so we can detect whether the user actually changed anything
   const original = {
     name: product.name,
     price: String(product.price),
@@ -213,7 +195,6 @@ const EditModal = ({
     );
   };
 
-  // Fayllar tanlanganda — mavjudlarga qo'shamiz, MAX_IMAGES tadan oshirmaymiz
   const handleNewImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -260,7 +241,6 @@ const EditModal = ({
     }
 
     if (!hasChanges) {
-      // Nothing changed — just close the modal, no request, no toast
       onClose();
       return;
     }
@@ -273,7 +253,7 @@ const EditModal = ({
     formData.append("description", description);
     formData.append("isActive", isActive);
     if (newImages.length) {
-      newImages.forEach((file) => formData.append("images", file)); // backend "images" kutadi
+      newImages.forEach((file) => formData.append("images", file));
     }
 
     setLoading(true);
@@ -402,7 +382,6 @@ const EditModal = ({
                 <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
               </label>
 
-              {/* Hozirgi rasmlar */}
               <p className="text-xs text-muted mb-1.5">
                 {t("productList.modal.currentImages", "Hozirgi rasmlar")}:
               </p>
@@ -412,7 +391,13 @@ const EditModal = ({
                     key={idx}
                     src={src}
                     alt={`${product.name} ${idx + 1}`}
-                    onClick={() => setLightbox({ type: "existing", index: idx })}
+                    onClick={() =>
+                      setLightbox({
+                        images: existingImages,
+                        index: idx,
+                        alt: product.name,
+                      })
+                    }
                     className="w-14 h-14 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
                   />
                 ))}
@@ -433,7 +418,13 @@ const EditModal = ({
                     <img
                       src={url}
                       alt={newImages[idx]?.name}
-                      onClick={() => setLightbox({ type: "new", index: idx })}
+                      onClick={() =>
+                        setLightbox({
+                          images: newPreviews,
+                          index: idx,
+                          alt: newImages[idx]?.name,
+                        })
+                      }
                       className="w-14 h-14 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
                     />
                     <button
@@ -499,16 +490,9 @@ const EditModal = ({
 
       {lightbox && (
         <ImageLightbox
-          src={
-            lightbox.type === "existing"
-              ? existingImages[lightbox.index]
-              : newPreviews[lightbox.index]
-          }
-          alt={
-            lightbox.type === "existing"
-              ? `${product.name} ${lightbox.index + 1}`
-              : newImages[lightbox.index]?.name
-          }
+          images={lightbox.images}
+          initialIndex={lightbox.index}
+          alt={lightbox.alt}
           onClose={() => setLightbox(null)}
         />
       )}
@@ -520,7 +504,8 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
-  const [viewImage, setViewImage] = useState(null); // { src, alt } | null
+  // Lightbox: { images: string[], index: number, alt: string } | null
+  const [viewImage, setViewImage] = useState(null);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const { t } = useTranslation();
@@ -536,7 +521,6 @@ const ProductList = () => {
 
   useEffect(load, []);
 
-  // Categorylarni bitta marta yuklaymiz, EditModal ochilganda qayta so'rov yubormasin uchun
   useEffect(() => {
     api
       .get("/products/categories")
@@ -545,7 +529,6 @@ const ProductList = () => {
       .finally(() => setCategoriesLoading(false));
   }, []);
 
-  // Close any leftover confirm/toast when the page mounts or unmounts
   useEffect(() => {
     toast.dismiss();
     return () => toast.dismiss();
@@ -572,13 +555,7 @@ const ProductList = () => {
       (tst) => (
         <div className="flex gap-3 items-start" style={{ minWidth: 260 }}>
           <div className="shrink-0 w-9 h-9 rounded-full bg-terracotta/15 flex items-center justify-center">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z"
                 stroke="#B45F3A"
@@ -657,19 +634,26 @@ const ProductList = () => {
             return (
               <div key={p._id} className="card overflow-hidden flex flex-col">
                 <div className="relative">
-                  <ImageCarousel
-                    images={cardImages}
+                  <img
+                    src={cardImages[0]}
                     alt={p.name}
-                    onImageClick={(idx) =>
-                      setViewImage({ src: cardImages[idx], alt: p.name })
+                    onClick={() =>
+                      setViewImage({ images: cardImages, index: 0, alt: p.name })
                     }
-                    imgClassName="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                   />
                   {!p.isActive && (
                     <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-ink/70 text-paper px-2 py-1 rounded-tag">
                       {t("productList.hidden")}
                     </span>
                   )}
+                  <span className="absolute top-2 right-2 text-[10px] font-medium bg-white/90 text-ink px-2 py-1 rounded-tag shadow-sm">
+                    {t("productList.imageCount", {
+                      count: cardImages.length,
+                      max: MAX_IMAGES,
+                      defaultValue: "{{count}} dan {{max}}",
+                    })}
+                  </span>
                 </div>
                 <div className="px-4 py-3 flex-1 flex flex-col">
                   <p className="font-medium text-ink truncate">{p.name}</p>
@@ -712,7 +696,8 @@ const ProductList = () => {
 
       {viewImage && (
         <ImageLightbox
-          src={viewImage.src}
+          images={viewImage.images}
+          initialIndex={viewImage.index}
           alt={viewImage.alt}
           onClose={() => setViewImage(null)}
         />
