@@ -120,7 +120,7 @@
     "confirmCancelYes": "Отменить",
     "confirmCancelCancel": "Назад",
     "cancelSuccess": "Заказ отменён",
-    "viewLocation": "Manzilni ko'rish"
+    "viewLocation": "Показать на карте"
   },
   "orderHistory": {
     "title": "История заказов",
