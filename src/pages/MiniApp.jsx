@@ -78,17 +78,23 @@ export default function MiniApp() {
   useEffect(() => {
     setLoading(true);
     api
-      .get("/public/products", { params: activeCategory ? { category: activeCategory } : {} })
+      .get("/public/products", {
+        params: activeCategory ? { category: activeCategory } : {},
+      })
       .then((res) => setProducts(res.data))
       .finally(() => setLoading(false));
   }, [activeCategory]);
 
   const addToCart = (product, size) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.productId === product._id && i.size === size);
+      const existing = prev.find(
+        (i) => i.productId === product._id && i.size === size
+      );
       if (existing) {
         return prev.map((i) =>
-          i.productId === product._id && i.size === size ? { ...i, quantity: i.quantity + 1 } : i
+          i.productId === product._id && i.size === size
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
         );
       }
       return [
@@ -110,7 +116,9 @@ export default function MiniApp() {
     setCart((prev) =>
       prev
         .map((i) =>
-          i.productId === productId && i.size === size ? { ...i, quantity: i.quantity + delta } : i
+          i.productId === productId && i.size === size
+            ? { ...i, quantity: i.quantity + delta }
+            : i
         )
         .filter((i) => i.quantity > 0)
     );
@@ -165,7 +173,9 @@ export default function MiniApp() {
             key={c.key}
             onClick={() => setActiveCategory(c.key)}
             className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-              activeCategory === c.key ? "bg-black text-white" : "bg-white border"
+              activeCategory === c.key
+                ? "bg-black text-white"
+                : "bg-white border"
             }`}
           >
             {c[nameKey]}
@@ -183,7 +193,10 @@ export default function MiniApp() {
           {products.map((p) => {
             const imgSrc = getImageSrc(p.image);
             return (
-              <div key={p._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div
+                key={p._id}
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
+              >
                 <img
                   src={imgSrc}
                   alt={p.name}
@@ -210,8 +223,14 @@ export default function MiniApp() {
 
       {/* O'lcham tanlash modal */}
       {selectingProduct && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelectingProduct(null)}>
-          <div className="bg-white w-full rounded-t-2xl p-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/40 flex items-end z-30"
+          onClick={() => setSelectingProduct(null)}
+        >
+          <div
+            className="bg-white w-full rounded-t-2xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 mb-3">
               {getImageSrc(selectingProduct.image) && (
                 <img
@@ -251,13 +270,22 @@ export default function MiniApp() {
 
       {/* Checkout panel — endi faqat savat tarkibini ko'rsatadi, telefon/manzil so'ramaydi */}
       {checkoutOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setCheckoutOpen(false)}>
-          <div className="bg-white w-full rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/40 flex items-end z-30"
+          onClick={() => setCheckoutOpen(false)}
+        >
+          <div
+            className="bg-white w-full rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <p className="font-semibold mb-3">{tr.cart}</p>
             {cart.map((i) => {
               const imgSrc = getImageSrc(i.image);
               return (
-                <div key={i.productId + i.size} className="flex items-center justify-between py-2 border-b">
+                <div
+                  key={i.productId + i.size}
+                  className="flex items-center justify-between py-2 border-b"
+                >
                   <div className="flex items-center gap-2.5 min-w-0">
                     {imgSrc && (
                       <img
@@ -277,9 +305,19 @@ export default function MiniApp() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => changeQty(i.productId, i.size, -1)} className="w-6 h-6 border rounded">-</button>
+                    <button
+                      onClick={() => changeQty(i.productId, i.size, -1)}
+                      className="w-6 h-6 border rounded"
+                    >
+                      -
+                    </button>
                     <span>{i.quantity}</span>
-                    <button onClick={() => changeQty(i.productId, i.size, 1)} className="w-6 h-6 border rounded">+</button>
+                    <button
+                      onClick={() => changeQty(i.productId, i.size, 1)}
+                      className="w-6 h-6 border rounded"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               );
@@ -308,14 +346,21 @@ export default function MiniApp() {
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-40 p-4"
           onClick={() => setPreviewImage(null)}
         >
-          <div className="relative w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="relative w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setPreviewImage(null)}
               className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg text-lg leading-none"
             >
               ×
             </button>
-            <img src={previewImage} alt="" className="w-full max-h-[80vh] object-contain rounded-lg" />
+            <img
+              src={previewImage}
+              alt=""
+              className="w-full max-h-[80vh] object-contain rounded-lg"
+            />
           </div>
         </div>
       )}

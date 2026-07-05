@@ -20,7 +20,9 @@ const TOAST_STYLE = {
 // Bir xil tartib ProductList.jsx dagi SIZE_ORDER bilan mos bo'lishi kerak
 const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
 const sortSizes = (arr) =>
-  [...arr].sort((a, b) => AVAILABLE_SIZES.indexOf(a) - AVAILABLE_SIZES.indexOf(b));
+  [...arr].sort(
+    (a, b) => AVAILABLE_SIZES.indexOf(a) - AVAILABLE_SIZES.indexOf(b)
+  );
 
 const AddProduct = () => {
   const [name, setName] = useState("");
