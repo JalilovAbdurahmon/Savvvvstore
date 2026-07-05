@@ -17,10 +17,7 @@ import {
 
 const PAGE_SIZE = 4;
 
-const API_ORIGIN = (
-  import.meta.env.VITE_API_URL ||
-  "https://savvvvstore-backend-production.up.railway.app/api"
-).replace(/\/api\/?$/, "");
+const API_ORIGIN = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 
 const resolveImageSrc = (img) => {
   if (!img) return null;
