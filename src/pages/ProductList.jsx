@@ -102,7 +102,7 @@ const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
               type="button"
               onClick={goPrev}
               aria-label="Previous image"
-              className="absolute top-1/2 -translate-y-1/2 left-14 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
+              className="absolute top-1/2 -translate-y-1/2 -left-14 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
             >
               ‹
             </button>
@@ -110,7 +110,7 @@ const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
               type="button"
               onClick={goNext}
               aria-label="Next image"
-              className="absolute top-1/2 -translate-y-1/2 right-14 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
+              className="absolute top-1/2 -translate-y-1/2 -right-14 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
             >
               ›
             </button>
