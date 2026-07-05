@@ -25,7 +25,10 @@ const TOAST_STYLE = {
   },
 };
 
-// Fullscreen image lightbox — click backdrop or the X to close
+// Bir vaqtning o'zida faqat bitta "o'chirildi" toasti chiqishi uchun fixed id
+// (id bir xil bo'lsa, react-hot-toast eskisini yangisi bilan almashtiradi, ustma-ust qo'ymaydi)
+const DELETE_TOAST_ID = "product-delete-toast";
+
 // Fullscreen image lightbox — click backdrop or the X to close
 const ImageLightbox = ({ src, alt, onClose }) => {
   useEffect(() => {
@@ -394,7 +397,8 @@ const ProductList = () => {
   }, []);
 
   // Close any leftover confirm/toast when the page mounts or unmounts
-  // (e.g. user navigated away with the delete-confirm toast still open)
+  // (e.g. user navigated away with the delete-confirm toast still open,
+  // yoki boshqa sahifaga o'tganda ochiq qolgan "o'chirildi" toasti ham darhol yopiladi)
   useEffect(() => {
     toast.dismiss();
     return () => toast.dismiss();
@@ -404,14 +408,16 @@ const ProductList = () => {
     try {
       await api.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p._id !== id));
+      // id bir xil bo'lgani uchun, ketma-ket bir necha marta o'chirilsa ham
+      // toastlar ustma-ust to'planmaydi — har safar avvalgisi yangisi bilan almashadi
       toast.success(
         t("productList.toast.deleteSuccess", "Mahsulot o'chirildi"),
-        TOAST_STYLE
+        { ...TOAST_STYLE, id: DELETE_TOAST_ID }
       );
     } catch (err) {
       toast.error(
         err.response?.data?.message || t("productList.errorDelete"),
-        TOAST_STYLE
+        { ...TOAST_STYLE, id: DELETE_TOAST_ID }
       );
     }
   };
