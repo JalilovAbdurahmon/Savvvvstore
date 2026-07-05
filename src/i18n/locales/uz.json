@@ -76,6 +76,7 @@
     "errorLoad": "Mahsulotlarni yuklab bo'lmadi",
     "errorDelete": "O'chirishda xatolik yuz berdi",
     "confirmDelete": "Mahsulotni o'chirishni tasdiqlaysizmi?",
+    "imageCount": "{{count}} dan {{max}}",
     "modal": {
       "title": "Mahsulotni tahrirlash",
       "name": "Nomi",
@@ -87,7 +88,12 @@
       "save": "Saqlash",
       "saving": "Saqlanmoqda...",
       "cancel": "Bekor qilish",
-      "errorDefault": "Saqlashda xatolik yuz berdi"
+      "errorDefault": "Saqlashda xatolik yuz berdi",
+      "currentImages": "Hozirgi rasmlar",
+      "replaceWarning": "Yangi rasm tanlansangiz, eski rasmlarning barchasi almashtiriladi",
+      "errorMaxImages": "Maksimal 3 ta rasm yuklash mumkin",
+      "errorNoSize": "Kamida bitta razmer tanlang",
+      "errorNoCategory": "Kategoriya tanlang"
     },
     "toast": {
       "updateSuccess": "Mahsulot muvaffaqiyatli yangilandi",
