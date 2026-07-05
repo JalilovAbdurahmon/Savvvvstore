@@ -63,7 +63,8 @@
     "loadingCategories": "Загрузка...",
     "noCategories": "Категории не найдены",
     "errorNoCategory": "Выберите категорию",
-    "errorCategories": "Ошибка загрузки категорий"
+    "errorCategories": "Ошибка загрузки категорий",
+    "mainImage": "Главный"
   },
   "productList": {
     "title": "Товары",

@@ -63,7 +63,8 @@
     "loadingCategories": "Yuklanmoqda...",
     "noCategories": "Kategoriya topilmadi",
     "errorNoCategory": "Kategoriyani tanlang",
-    "errorCategories": "Kategoriyalarni yuklashda xatolik"
+    "errorCategories": "Kategoriyalarni yuklashda xatolik",
+    "mainImage": "Asosiy"
   },
   "productList": {
     "title": "Mahsulotlar",

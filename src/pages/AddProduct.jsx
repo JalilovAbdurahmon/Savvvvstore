@@ -322,7 +322,7 @@ const AddProduct = () => {
                   />
                   {idx === 0 && (
                     <span className="absolute -top-1.5 -left-1.5 text-[9px] uppercase bg-terracotta text-white px-1.5 py-0.5 rounded-tag">
-                      {t("addProduct.mainImage", "Asosiy")}
+                      {t("addProduct.mainImage")}
                     </span>
                   )}
                   <button

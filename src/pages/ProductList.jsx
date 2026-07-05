@@ -456,7 +456,7 @@ const EditModal = ({
                     />
                     {idx === 0 && (
                       <span className="absolute -top-1.5 -left-1.5 text-[8px] uppercase bg-terracotta text-white px-1 py-0.5 rounded-tag">
-                        {t("addProduct.mainImage", "Asosiy")}
+                        {t("addProduct.mainImage")}
                       </span>
                     )}
                     <button
