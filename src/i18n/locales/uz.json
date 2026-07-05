@@ -90,8 +90,10 @@
       "cancel": "Bekor qilish",
       "errorDefault": "Saqlashda xatolik yuz berdi",
       "currentImages": "Hozirgi rasmlar",
+      "newImages": "Yangi qo'shilgan",
       "replaceWarning": "Yangi rasm tanlansangiz, eski rasmlarning barchasi almashtiriladi",
       "errorMaxImages": "Maksimal 3 ta rasm yuklash mumkin",
+      "errorMinImages": "Kamida 1 ta rasm qolishi kerak",
       "errorNoSize": "Kamida bitta razmer tanlang",
       "errorNoCategory": "Kategoriya tanlang"
     },

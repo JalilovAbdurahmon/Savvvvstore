@@ -90,8 +90,10 @@
       "cancel": "Отмена",
       "errorDefault": "Ошибка при сохранении",
       "currentImages": "Текущие фото",
+      "newImages": "Новые фото",
       "replaceWarning": "При выборе новых фото все старые будут заменены",
       "errorMaxImages": "Можно загрузить максимум 3 фото",
+      "errorMinImages": "Должно остаться хотя бы 1 фото",
       "errorNoSize": "Выберите хотя бы один размер",
       "errorNoCategory": "Выберите категорию"
     },

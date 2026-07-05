@@ -29,9 +29,10 @@ const TOAST_STYLE = {
 
 const DELETE_TOAST_ID = "product-delete-toast";
 
-// Fullscreen image lightbox — bir nechta rasm bo'lsa, chap/o'ng strelkalar
-// aynan rasmning o'zining chetiga (kichik margin bilan) joylashadi,
-// chunki wrapper "inline-block" bo'lib rasmning haqiqiy o'lchamiga yopishadi.
+// Fullscreen image lightbox. Strelkalar "fixed" bo'lib ekranning chap/o'ng
+// chetiga yopishadi (rasm o'lchamidan qat'iy nazar), overlay'ga qo'shilgan
+// gorizontal padding esa rasmni avtomatik toraytirib, strelkalar bilan
+// rasm orasida doim joy qoladi.
 const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
   const [index, setIndex] = useState(initialIndex);
   const hasMultiple = images.length > 1;
@@ -65,11 +66,9 @@ const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
+      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-14 sm:px-20 py-6"
       onClick={onClose}
     >
-      {/* inline-block wrapper — aynan rasm o'lchamiga yopishadi, shu bilan
-          strelkalar rasm chetiga nisbatan joylashadi, ekran chetiga emas */}
       <div
         className="relative inline-block max-w-full max-h-full"
         onClick={(e) => e.stopPropagation()}
@@ -79,7 +78,13 @@ const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
           aria-label="Close"
           className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors z-20"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               d="M18 6L6 18M6 6l12 12"
               stroke="currentColor"
@@ -97,36 +102,39 @@ const ImageLightbox = ({ images, initialIndex = 0, alt, onClose }) => {
         />
 
         {hasMultiple && (
-          <>
-            <button
-              type="button"
-              onClick={goPrev}
-              aria-label="Previous image"
-              className="absolute top-1/2 -translate-y-1/2 -left-14 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              aria-label="Next image"
-              className="absolute top-1/2 -translate-y-1/2 -right-14 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-10 text-lg"
-            >
-              ›
-            </button>
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              {images.map((_, i) => (
-                <span
-                  key={i}
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    i === index ? "bg-white" : "bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
-          </>
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full ${
+                  i === index ? "bg-white" : "bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
         )}
       </div>
+
+      {hasMultiple && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous image"
+            className="fixed top-1/2 -translate-y-1/2 left-2 sm:left-4 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-20 text-lg"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next image"
+            className="fixed top-1/2 -translate-y-1/2 right-2 sm:right-4 w-10 h-10 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-md hover:bg-white transition-colors z-20 text-lg"
+          >
+            ›
+          </button>
+        </>
+      )}
     </div>
   );
 };
@@ -145,14 +153,14 @@ const EditModal = ({
   const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
 
-  const existingImages = (
-    product.images && product.images.length
-      ? product.images
-      : [product.image]
-  ).map((img) => `${API_ORIGIN}${img}`);
+  // Eski rasmlar (relative path, masalan "/uploads/xxx.jpg") — × bosilganda
+  // shu ro'yxatdan chiqariladi (hali serverga yuborilmagan, faqat local state)
+  const originalImages =
+    product.images && product.images.length ? product.images : [product.image];
+  const [keptImages, setKeptImages] = useState(originalImages);
 
-  const [newImages, setNewImages] = useState([]);
-  const [newPreviews, setNewPreviews] = useState([]);
+  const [newImages, setNewImages] = useState([]); // File[]
+  const [newPreviews, setNewPreviews] = useState([]); // string[]
 
   // Lightbox: { images: string[], index: number, alt: string } | null
   const [lightbox, setLightbox] = useState(null);
@@ -168,6 +176,8 @@ const EditModal = ({
     setNewPreviews(urls);
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, [newImages]);
+
+  const totalCount = keptImages.length + newImages.length;
 
   const original = {
     name: product.name,
@@ -185,7 +195,9 @@ const EditModal = ({
     category !== original.category ||
     description !== original.description ||
     isActive !== original.isActive ||
-    newImages.length > 0;
+    newImages.length > 0 ||
+    keptImages.length !== originalImages.length ||
+    keptImages.some((img, i) => img !== originalImages[i]);
 
   const toggleSize = (size) => {
     setSizes((prev) =>
@@ -195,13 +207,40 @@ const EditModal = ({
     );
   };
 
+  // Eski rasmni ro'yxatdan chiqarish — oxirgi (yagona) rasmni o'chirib bo'lmaydi
+  const removeExistingImage = (index) => {
+    if (totalCount <= 1) {
+      toast.error(
+        t(
+          "productList.modal.errorMinImages",
+          "Kamida 1 ta rasm qolishi kerak"
+        ),
+        TOAST_STYLE
+      );
+      return;
+    }
+    setKeptImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleNewImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const combined = [...newImages, ...files].slice(0, MAX_IMAGES);
+    const availableSlots = MAX_IMAGES - keptImages.length - newImages.length;
 
-    if (newImages.length + files.length > MAX_IMAGES) {
+    if (availableSlots <= 0) {
+      toast.error(
+        t(
+          "productList.modal.errorMaxImages",
+          `Maksimal ${MAX_IMAGES} ta rasm yuklash mumkin`
+        ),
+        TOAST_STYLE
+      );
+      e.target.value = "";
+      return;
+    }
+
+    if (files.length > availableSlots) {
       toast.error(
         t(
           "productList.modal.errorMaxImages",
@@ -211,7 +250,7 @@ const EditModal = ({
       );
     }
 
-    setNewImages(combined);
+    setNewImages((prev) => [...prev, ...files.slice(0, availableSlots)]);
     e.target.value = "";
   };
 
@@ -240,6 +279,16 @@ const EditModal = ({
       return;
     }
 
+    if (totalCount === 0) {
+      const msg = t(
+        "productList.modal.errorMinImages",
+        "Kamida 1 ta rasm qolishi kerak"
+      );
+      setError(msg);
+      toast.error(msg, TOAST_STYLE);
+      return;
+    }
+
     if (!hasChanges) {
       onClose();
       return;
@@ -252,6 +301,8 @@ const EditModal = ({
     formData.append("category", category);
     formData.append("description", description);
     formData.append("isActive", isActive);
+    // Har doim yuboramiz — backend qaysi eski rasmlar qolishini shundan biladi
+    formData.append("existingImages", JSON.stringify(keptImages));
     if (newImages.length) {
       newImages.forEach((file) => formData.append("images", file));
     }
@@ -278,6 +329,8 @@ const EditModal = ({
       setLoading(false);
     }
   };
+
+  const keptImageUrls = keptImages.map((img) => `${API_ORIGIN}${img}`);
 
   return (
     <>
@@ -382,36 +435,51 @@ const EditModal = ({
                 <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
               </label>
 
+              {/* Hozirgi (eski) rasmlar — × bosilsa ro'yxatdan chiqadi */}
               <p className="text-xs text-muted mb-1.5">
                 {t("productList.modal.currentImages", "Hozirgi rasmlar")}:
               </p>
-              <div className="flex gap-2 mb-3">
-                {existingImages.map((src, idx) => (
-                  <img
-                    key={idx}
-                    src={src}
-                    alt={`${product.name} ${idx + 1}`}
-                    onClick={() =>
-                      setLightbox({
-                        images: existingImages,
-                        index: idx,
-                        alt: product.name,
-                      })
-                    }
-                    className="w-14 h-14 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
-                  />
+              <div className="flex items-center gap-3 flex-wrap mb-3">
+                {keptImageUrls.map((src, idx) => (
+                  <div key={idx} className="relative w-14 h-14 shrink-0">
+                    <img
+                      src={src}
+                      alt={`${product.name} ${idx + 1}`}
+                      onClick={() =>
+                        setLightbox({
+                          images: keptImageUrls,
+                          index: idx,
+                          alt: product.name,
+                        })
+                      }
+                      className="w-14 h-14 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
+                    />
+                    {idx === 0 && (
+                      <span className="absolute -top-1.5 -left-1.5 text-[8px] uppercase bg-terracotta text-white px-1 py-0.5 rounded-tag">
+                        {t("addProduct.mainImage", "Asosiy")}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeExistingImage(idx);
+                      }}
+                      aria-label="Remove image"
+                      className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-ink text-paper flex items-center justify-center text-[10px] leading-none shadow-md hover:bg-terracottaDark transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
 
+              {/* Yangi qo'shilgan rasmlar */}
               {newImages.length > 0 && (
-                <p className="text-xs text-terracottaDark mb-1.5">
-                  {t(
-                    "productList.modal.replaceWarning",
-                    "Yangi rasm tanlansangiz, eski rasmlarning barchasi almashtiriladi"
-                  )}
+                <p className="text-xs text-muted mb-1.5">
+                  {t("productList.modal.newImages", "Yangi qo'shilgan")}:
                 </p>
               )}
-
               <div className="flex items-center gap-3 flex-wrap">
                 {newPreviews.map((url, idx) => (
                   <div key={idx} className="relative w-14 h-14 shrink-0">
@@ -440,7 +508,7 @@ const EditModal = ({
                     </button>
                   </div>
                 ))}
-                {newImages.length < MAX_IMAGES && (
+                {totalCount < MAX_IMAGES && (
                   <label className="btn-secondary cursor-pointer shrink-0">
                     {t("addProduct.chooseImage")}
                     <input
@@ -555,7 +623,13 @@ const ProductList = () => {
       (tst) => (
         <div className="flex gap-3 items-start" style={{ minWidth: 260 }}>
           <div className="shrink-0 w-9 h-9 rounded-full bg-terracotta/15 flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z"
                 stroke="#B45F3A"
