@@ -50,7 +50,8 @@ const TEXTS = {
       "Joylashuvga ruxsat berilmadi. Xaritani qo'l bilan surib, kerakli joyni belgilang.",
     yourAddress: "Manzil",
     confirmLocation: "Bu manzilni tasdiqlash",
-    gpsButton: "Joylashuvimni aniqlash",
+    pinInstructionTitle: "Manzilni ko'rsating",
+    pinInstructionSubtitle: "Xaritani suring yoki markerni bosib joyni belgilang",
     back: "Orqaga",
   },
   ru: {
@@ -72,7 +73,8 @@ const TEXTS = {
       "Доступ к геолокации не разрешён. Передвиньте карту вручную и выберите нужное место.",
     yourAddress: "Адрес",
     confirmLocation: "Подтвердить этот адрес",
-    gpsButton: "Определить моё местоположение",
+    pinInstructionTitle: "Укажите адрес",
+    pinInstructionSubtitle: "Перетащите карту или нажмите на метку",
     back: "Назад",
   },
 };
@@ -294,33 +296,57 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
       <div className="relative flex-1">
         <div ref={mapElRef} className="absolute inset-0" />
 
-        <button
-          onClick={detectGps}
-          className="absolute bottom-4 right-3 w-11 h-11 rounded-full bg-white shadow-lg flex items-center justify-center text-lg z-10"
-          aria-label={tr.gpsButton}
-        >
-          📍
-        </button>
+        {/* Yuqoridagi "manzilni ko'rsating" karta — 1-2-rasmdagi uslub */}
+        <div className="absolute top-3 left-3 right-3 bg-white rounded-2xl shadow-lg px-4 py-3 z-10">
+          <p className="font-semibold text-[15px]">{tr.pinInstructionTitle}</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {locating ? tr.locating : tr.pinInstructionSubtitle}
+          </p>
+        </div>
 
-        {locating && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full z-10 whitespace-nowrap">
-            {tr.locating}
-          </div>
-        )}
+        {/* Zoom +/- tugmalari — chap tomonda, karta ustida */}
+        <div className="absolute bottom-4 right-3 z-10 flex flex-col rounded-xl shadow-lg overflow-hidden bg-white">
+          <button
+            onClick={() => mapRef.current?.zoomIn()}
+            className="w-11 h-11 flex items-center justify-center text-xl border-b active:bg-gray-100"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+          <button
+            onClick={() => mapRef.current?.zoomOut()}
+            className="w-11 h-11 flex items-center justify-center text-xl active:bg-gray-100"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+        </div>
       </div>
 
+      {/* Pastdagi manzil karta — 1-2-rasmdagi uslubda: pin ikonka + manzil + koordinata + katta tugma */}
       <div className="p-4 border-t shrink-0 bg-white">
         {deniedNote && (
           <p className="text-xs text-amber-600 mb-2">{tr.locationDenied}</p>
         )}
-        <p className="text-xs text-gray-400 mb-1">{tr.yourAddress}</p>
-        <p className="text-sm mb-3 min-h-[20px] line-clamp-2">
-          {addressLoading ? tr.loading : address || "—"}
-        </p>
+        <div className="flex items-start gap-2.5 mb-4">
+          <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+            <span className="text-blue-600 text-lg">📍</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium leading-snug">
+              {addressLoading ? tr.loading : address || "—"}
+            </p>
+            {center && (
+              <p className="text-xs text-gray-400 mt-0.5 font-mono">
+                {center.lat.toFixed(5)}, {center.lng.toFixed(5)}
+              </p>
+            )}
+          </div>
+        </div>
         <button
           disabled={!center}
           onClick={() => onConfirm({ ...center, address })}
-          className="w-full bg-black text-white py-3 rounded-xl font-medium disabled:opacity-50"
+          className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-medium disabled:opacity-50"
         >
           {tr.confirmLocation}
         </button>
