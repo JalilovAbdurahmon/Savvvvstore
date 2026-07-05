@@ -24,6 +24,53 @@ const sortSizes = (arr) =>
     (a, b) => AVAILABLE_SIZES.indexOf(a) - AVAILABLE_SIZES.indexOf(b)
   );
 
+// Fullscreen image lightbox — click backdrop or the X to close
+const ImageLightbox = ({ src, alt, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
+      onClick={onClose}
+    >
+      <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors z-10"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6L6 18M6 6l12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <img
+          src={src}
+          alt={alt}
+          className="max-w-full max-h-[85vh] object-contain rounded-tag"
+        />
+      </div>
+    </div>
+  );
+};
+
 const AddProduct = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -34,6 +81,7 @@ const AddProduct = () => {
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -241,7 +289,8 @@ const AddProduct = () => {
                 <img
                   src={preview}
                   alt="preview"
-                  className="w-20 h-20 object-cover rounded-tag border border-sand"
+                  onClick={() => setShowImagePreview(true)}
+                  className="w-20 h-20 object-cover rounded-tag border border-sand cursor-pointer hover:opacity-80 transition-opacity"
                 />
               )}
               <label className="btn-secondary cursor-pointer">
@@ -267,6 +316,14 @@ const AddProduct = () => {
           {loading ? t("addProduct.loading") : t("addProduct.submit")}
         </button>
       </form>
+
+      {showImagePreview && preview && (
+        <ImageLightbox
+          src={preview}
+          alt={image?.name}
+          onClose={() => setShowImagePreview(false)}
+        />
+      )}
     </Layout>
   );
 };
