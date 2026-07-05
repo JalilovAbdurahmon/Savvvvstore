@@ -236,6 +236,24 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
     );
   };
 
+  // Xarita ichida barmoq bilan surganda ostidagi sahifa (body) ham birga
+  // siljib, "fixed" qilingan top-card va zoom tugmalari vaqtincha ekrandan
+  // chiqib ketishining oldini olamiz — LocationPicker ochiq turgan vaqtda
+  // sahifa scroll'i to'liq bloklanadi, komponent yopilganda qaytariladi.
+  useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyTouch = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.touchAction = prevBodyTouch;
+    };
+  }, []);
+
   // Xaritani va markerni bir marta yaratamiz
   useEffect(() => {
     const map = L.map(mapElRef.current, {
@@ -285,7 +303,10 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   }, [center]);
 
   return (
-    <div className="fixed inset-0 bg-white z-40 flex flex-col">
+    <div
+      className="fixed inset-0 bg-white z-40 flex flex-col"
+      style={{ touchAction: "none", overscrollBehavior: "none" }}
+    >
       <div className="flex items-center gap-3 p-3 border-b shrink-0">
         <button onClick={onBack} className="text-2xl leading-none px-1">
           ‹
@@ -293,19 +314,29 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
         <p className="font-medium">{tr.chooseLocation}</p>
       </div>
 
-      <div className="relative flex-1">
-        <div ref={mapElRef} className="absolute inset-0" />
+      <div className="relative flex-1 overflow-hidden">
+        <div
+          ref={mapElRef}
+          className="absolute inset-0"
+          style={{ zIndex: 0, touchAction: "none" }}
+        />
 
         {/* Yuqoridagi "manzilni ko'rsating" karta — 1-2-rasmdagi uslub */}
-        <div className="absolute top-3 left-3 right-3 bg-white rounded-2xl shadow-lg px-4 py-3 z-10">
+        <div
+          className="absolute top-3 left-3 right-3 bg-white rounded-2xl shadow-lg px-4 py-3"
+          style={{ zIndex: 30 }}
+        >
           <p className="font-semibold text-[15px]">{tr.pinInstructionTitle}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {locating ? tr.locating : tr.pinInstructionSubtitle}
           </p>
         </div>
 
-        {/* Zoom +/- tugmalari — chap tomonda, karta ustida */}
-        <div className="absolute bottom-4 right-3 z-10 flex flex-col rounded-xl shadow-lg overflow-hidden bg-white">
+        {/* Zoom +/- tugmalari — o'ng tomonda, karta ustida */}
+        <div
+          className="absolute bottom-4 right-3 flex flex-col rounded-xl shadow-lg overflow-hidden bg-white"
+          style={{ zIndex: 30 }}
+        >
           <button
             onClick={() => mapRef.current?.zoomIn()}
             className="w-11 h-11 flex items-center justify-center text-xl border-b active:bg-gray-100"
@@ -324,7 +355,7 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
       </div>
 
       {/* Pastdagi manzil karta — 1-2-rasmdagi uslubda: pin ikonka + manzil + koordinata + katta tugma */}
-      <div className="p-4 border-t shrink-0 bg-white">
+      <div className="p-4 border-t shrink-0 bg-white relative" style={{ zIndex: 30 }}>
         {deniedNote && (
           <p className="text-xs text-amber-600 mb-2">{tr.locationDenied}</p>
         )}
