@@ -119,7 +119,8 @@
     "confirmCancelTitle": "Отменить заказ?",
     "confirmCancelYes": "Отменить",
     "confirmCancelCancel": "Назад",
-    "cancelSuccess": "Заказ отменён"
+    "cancelSuccess": "Заказ отменён",
+    "viewLocation": "Manzilni ko'rish"
   },
   "orderHistory": {
     "title": "История заказов",

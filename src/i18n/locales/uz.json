@@ -119,7 +119,8 @@
     "confirmCancelTitle": "Zakazni bekor qilasizmi?",
     "confirmCancelYes": "Bekor qilish",
     "confirmCancelCancel": "Orqaga",
-    "cancelSuccess": "Zakaz bekor qilindi"
+    "cancelSuccess": "Zakaz bekor qilindi",
+    "viewLocation": "Показать на карте"
   },
   "orderHistory": {
     "title": "Zakazlar tarixi",
