@@ -166,115 +166,117 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
   };
 
   return (
-    <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4" onClick={onClose}>
-      <div className="card w-full max-w-md px-6 py-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-xl font-serif font-semibold mb-5">{t("productList.modal.title")}</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="tag-label block mb-1.5">{t("productList.modal.name")}</label>
-            <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
-          <div>
-            <label className="tag-label block mb-1.5">{t("productList.modal.price")}</label>
-            <input
-              type="number"
-              className="input-field"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="tag-label block mb-1.5">{t("productList.modal.category", "Kategoriya")}</label>
-            <select
-              className="input-field"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              disabled={categoriesLoading || categories.length === 0}
-              required
-            >
-              {categoriesLoading && (
-                <option value="">{t("addProduct.loadingCategories")}</option>
-              )}
-              {!categoriesLoading && categories.length === 0 && (
-                <option value="">{t("addProduct.noCategories")}</option>
-              )}
-              {categories.map((cat) => (
-                <option key={cat.key} value={cat.key}>
-                  {categoryLabel(cat)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
-            <div className="flex gap-2">
-              {SIZE_ORDER.map((size) => {
-                const active = sizes.includes(size);
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    aria-pressed={active}
-                    className={`flex-1 h-11 rounded-tag border text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-terracotta text-white border-terracotta"
-                        : "bg-white text-charcoal border-sand hover:border-terracotta/50"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
+    <>
+      <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4" onClick={onClose}>
+        <div className="card w-full max-w-md px-6 py-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-xl font-serif font-semibold mb-5">{t("productList.modal.title")}</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="tag-label block mb-1.5">{t("productList.modal.name")}</label>
+              <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
-          </div>
-          <div>
-            <label className="tag-label block mb-1.5">{t("productList.modal.description")}</label>
-            <textarea
-              className="input-field min-h-[70px] resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="tag-label block mb-1.5">{t("productList.modal.newImage")}</label>
-            <div className="flex items-center gap-3">
+            <div>
+              <label className="tag-label block mb-1.5">{t("productList.modal.price")}</label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImage(e.target.files[0] || null)}
-                className="text-sm flex-1"
+                type="number"
+                className="input-field"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
               />
             </div>
-            {imagePreviewUrl && (
-              <div className="flex items-center gap-2.5 mt-2.5">
-                <img
-                  src={imagePreviewUrl}
-                  alt={image?.name}
-                  onClick={() => setShowImagePreview(true)}
-                  className="w-12 h-12 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-                />
-                <span className="text-xs text-ink/70 truncate">{image?.name}</span>
+            <div>
+              <label className="tag-label block mb-1.5">{t("productList.modal.category", "Kategoriya")}</label>
+              <select
+                className="input-field"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                disabled={categoriesLoading || categories.length === 0}
+                required
+              >
+                {categoriesLoading && (
+                  <option value="">{t("addProduct.loadingCategories")}</option>
+                )}
+                {!categoriesLoading && categories.length === 0 && (
+                  <option value="">{t("addProduct.noCategories")}</option>
+                )}
+                {categories.map((cat) => (
+                  <option key={cat.key} value={cat.key}>
+                    {categoryLabel(cat)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="tag-label block mb-1.5">{t("productList.modal.sizes")}</label>
+              <div className="flex gap-2">
+                {SIZE_ORDER.map((size) => {
+                  const active = sizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      aria-pressed={active}
+                      className={`flex-1 h-11 rounded-tag border text-sm font-medium transition-colors ${
+                        active
+                          ? "bg-terracotta text-white border-terracotta"
+                          : "bg-white text-charcoal border-sand hover:border-terracotta/50"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
               </div>
-            )}
-          </div>
-          <label className="flex items-center gap-2 text-sm text-ink/80">
-            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-            {t("productList.modal.visible")}
-          </label>
+            </div>
+            <div>
+              <label className="tag-label block mb-1.5">{t("productList.modal.description")}</label>
+              <textarea
+                className="input-field min-h-[70px] resize-none"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="tag-label block mb-1.5">{t("productList.modal.newImage")}</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImage(e.target.files[0] || null)}
+                  className="text-sm flex-1"
+                />
+              </div>
+              {imagePreviewUrl && (
+                <div className="flex items-center gap-2.5 mt-2.5">
+                  <img
+                    src={imagePreviewUrl}
+                    alt={image?.name}
+                    onClick={() => setShowImagePreview(true)}
+                    className="w-12 h-12 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                  />
+                  <span className="text-xs text-ink/70 truncate">{image?.name}</span>
+                </div>
+              )}
+            </div>
+            <label className="flex items-center gap-2 text-sm text-ink/80">
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+              {t("productList.modal.visible")}
+            </label>
 
-          {error && <p className="text-sm text-terracottaDark">{error}</p>}
+            {error && <p className="text-sm text-terracottaDark">{error}</p>}
 
-          <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={loading} className="btn-primary flex-1">
-              {loading ? t("productList.modal.saving") : t("productList.modal.save")}
-            </button>
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">
-              {t("productList.modal.cancel")}
-            </button>
-          </div>
-        </form>
+            <div className="flex gap-3 pt-2">
+              <button type="submit" disabled={loading} className="btn-primary flex-1">
+                {loading ? t("productList.modal.saving") : t("productList.modal.save")}
+              </button>
+              <button type="button" onClick={onClose} className="btn-secondary flex-1">
+                {t("productList.modal.cancel")}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       {showImagePreview && imagePreviewUrl && (
@@ -284,7 +286,7 @@ const EditModal = ({ product, categories, categoriesLoading, onClose, onSaved })
           onClose={() => setShowImagePreview(false)}
         />
       )}
-    </div>
+    </>
   );
 };
 
