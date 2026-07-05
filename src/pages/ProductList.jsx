@@ -431,10 +431,10 @@ const EditModal = ({
             </div>
 
             <div>
-              {/* <label className="tag-label block mb-1.5">
+              <label className="tag-label text-[14px] block mb-1.5">
                 {t("productList.modal.newImage")}{" "}
                 <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
-              </label> */}
+              </label>
 
               {/* Hozirgi (eski) rasmlar — × bosilsa ro'yxatdan chiqadi */}
               <p className="text-xs text-muted mb-1.5">
