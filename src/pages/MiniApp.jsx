@@ -48,12 +48,8 @@ const TEXTS = {
     telegramOnly: "Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.",
     chooseLocation: "Manzilni tasdiqlang",
     locating: "Joylashuv aniqlanmoqda...",
-    // GPS haqiqatan o'chirilgan/signal topilmagan holat uchun
-    locationWarning:
-      "GPS yoqilmagan bo'lishi mumkin. Iltimos, uni yoqing, aks holda joylashuvingiz noto'g'ri aniqlanishi mumkin.",
-    // Foydalanuvchi ruxsat so'ralganda "Не разрешать" bosgan holat uchun (GPS holatidan qat'i nazar)
-    locationPermissionDenied:
-      "Joylashuvga ruxsat berilmadi. Iltimos, brauzer yoki Telegram sozlamalaridan manzil aniqlash ruxsatini bering.",
+    // Doimiy, kichik eslatma (xatolikka bog'liq emas, har doim ko'rinadi)
+    gpsHint: "GPS yoqilganligiga ishonch hosil qiling",
     yourAddress: "Manzil",
     confirmLocation: "Bu manzilni tasdiqlash",
     pinInstructionTitle: "Manzilni ko'rsating",
@@ -78,12 +74,8 @@ const TEXTS = {
     telegramOnly: "Оформление заказа доступно только внутри Telegram.",
     chooseLocation: "Подтвердите адрес",
     locating: "Определяем местоположение...",
-    // Holat: GPS haqiqatan o'chirilgan/signal topilmagan
-    locationWarning:
-      "Возможно, GPS выключен. Пожалуйста, включите его, иначе местоположение может определиться неверно.",
-    // Holat: foydalanuvchi ruxsat oynasida "Не разрешать" bosgan (GPS holatidan qat'i nazar)
-    locationPermissionDenied:
-      "Доступ к геолокации не разрешён. Пожалуйста, разрешите определение местоположения в настройках браузера или Telegram.",
+    // Doimiy, kichik eslatma (xatolikka bog'liq emas, har doim ko'rinadi)
+    gpsHint: "Убедитесь, что GPS включён",
     yourAddress: "Адрес",
     confirmLocation: "Подтвердить этот адрес",
     pinInstructionTitle: "Укажите адрес",
@@ -200,8 +192,6 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const [address, setAddress] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [locating, setLocating] = useState(true);
-  // Ogohlantirish holati: null (muammo yo'q) | "off" (GPS o'chiq/signal yo'q) | "denied" (ruxsat berilmagan)
-  const [locationIssue, setLocationIssue] = useState(null);
 
   // Reverse-geocoding: koordinatani o'qiladigan manzil matniga aylantirish
   // (OpenStreetMap Nominatim — bepul, API key kerak emas, lekin production'da
@@ -232,25 +222,18 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const detectGps = () => {
     if (!navigator.geolocation) {
       setLocating(false);
-      setLocationIssue("off");
       return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocationIssue(null);
         moveTo(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
       },
-      (err) => {
-        // PERMISSION_DENIED (code 1) — foydalanuvchi "Не разрешать" bosgan,
-        // bu GPS yoniq/o'chiqligi bilan bog'liq emas, shuning uchun alohida xabar.
-        // POSITION_UNAVAILABLE (2) / TIMEOUT (3) — haqiqatan ham GPS/signal muammosi.
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationIssue("denied");
-        } else {
-          setLocationIssue("off");
-        }
+      () => {
+        // Sabab qanday bo'lishidan qat'iy nazar (ruxsat berilmagan, GPS o'chiq,
+        // signal topilmadi) — endi alohida ogohlantirish banner ko'rsatilmaydi,
+        // faqat pastdagi kichik doimiy eslatma (gpsHint) ko'rinadi.
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -353,25 +336,6 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
           </p>
         </div>
 
-        {/* Joylashuv bo'yicha ogohlantirish — sababiga qarab ikki xil matn:
-            "denied" -> foydalanuvchi ruxsat bermagan (GPS holatidan qat'i nazar),
-            "off" -> GPS haqiqatan o'chirilgan yoki signal topilmagan */}
-        {locationIssue && !locating && (
-          <div
-            className="absolute top-[92px] left-3 right-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-md px-4 py-3 flex items-start gap-2.5"
-            style={{ zIndex: 29 }}
-          >
-            <span className="text-amber-500 text-base leading-none mt-0.5">
-              ⚠️
-            </span>
-            <p className="text-xs text-amber-800 leading-relaxed">
-              {locationIssue === "denied"
-                ? tr.locationPermissionDenied
-                : tr.locationWarning}
-            </p>
-          </div>
-        )}
-
         {/* Zoom +/- tugmalari — o'ng tomonda, karta ustida */}
         <div
           className="absolute bottom-4 right-3 flex flex-col rounded-xl shadow-lg overflow-hidden bg-white"
@@ -412,6 +376,7 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
                 {center.lat.toFixed(5)}, {center.lng.toFixed(5)}
               </p>
             )}
+            <p className="text-[11px] text-gray-400 mt-1">{tr.gpsHint}</p>
           </div>
         </div>
         <button
