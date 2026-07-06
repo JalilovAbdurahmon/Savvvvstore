@@ -151,7 +151,7 @@
     "orderedAt": "Время заказа",
     "deliveredAt": "Время доставки",
     "location": "Адрес",
-    "viewLocation": "Посмотреть",
+    "viewLocation": "Посмотреть локатцию",
     "completed": "Выполнено",
     "cancelled": "Отменено",
     "currency": "сум",
