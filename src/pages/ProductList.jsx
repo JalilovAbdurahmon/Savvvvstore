@@ -28,6 +28,7 @@ const TOAST_STYLE = {
 };
 
 const DELETE_TOAST_ID = "product-delete-toast";
+const IMAGE_ERROR_TOAST_ID = "product-image-error-toast";
 
 // Fullscreen image lightbox. Strelkalar "fixed" bo'lib ekranning chap/o'ng
 // chetiga yopishadi (rasm o'lchamidan qat'iy nazar), overlay'ga qo'shilgan
@@ -155,8 +156,10 @@ const EditModal = ({
 
   // Eski rasmlar (relative path, masalan "/uploads/xxx.jpg") — × bosilganda
   // shu ro'yxatdan chiqariladi (hali serverga yuborilmagan, faqat local state)
-  const originalImages =
-    product.images && product.images.length ? product.images : [product.image];
+  // .filter(Boolean) — bo'sh/noto'g'ri qiymatlar hisobga kirmasligi uchun
+  const originalImages = (
+    product.images && product.images.length ? product.images : [product.image]
+  ).filter(Boolean);
   const [keptImages, setKeptImages] = useState(originalImages);
 
   const [newImages, setNewImages] = useState([]); // File[]
@@ -207,16 +210,36 @@ const EditModal = ({
     );
   };
 
-  // Eski rasmni ro'yxatdan chiqarish — oxirgi (yagona) rasmni o'chirib bo'lmaydi
+  // Eski rasmni ro'yxatdan chiqarish — jami rasm soni 1 tagacha tushib
+  // qolsa, oxirgisini o'chirishga ruxsat berilmaydi
   const removeExistingImage = (index) => {
     if (totalCount <= 1) {
       toast.error(
-        t("productList.modal.errorMinImages", "Kamida 1 ta rasm qolishi kerak"),
-        TOAST_STYLE
+        t(
+          "productList.modal.errorMinImages",
+          "Mahsulotda kamida 1 ta rasm bo'lishi kerak"
+        ),
+        { ...TOAST_STYLE, id: IMAGE_ERROR_TOAST_ID }
       );
       return;
     }
     setKeptImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Yangi qo'shilgan rasmni ro'yxatdan chiqarish — xuddi shu himoya:
+  // jami rasm soni 1 tagacha tushib qolsa, oxirgisini o'chirib bo'lmaydi
+  const removeNewImage = (index) => {
+    if (totalCount <= 1) {
+      toast.error(
+        t(
+          "productList.modal.errorMinImages",
+          "Mahsulotda kamida 1 ta rasm bo'lishi kerak"
+        ),
+        { ...TOAST_STYLE, id: IMAGE_ERROR_TOAST_ID }
+      );
+      return;
+    }
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleNewImagesChange = (e) => {
@@ -251,10 +274,6 @@ const EditModal = ({
     e.target.value = "";
   };
 
-  const removeNewImage = (index) => {
-    setNewImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -279,10 +298,10 @@ const EditModal = ({
     if (totalCount === 0) {
       const msg = t(
         "productList.modal.errorMinImages",
-        "Kamida 1 ta rasm qolishi kerak"
+        "Mahsulotda kamida 1 ta rasm bo'lishi kerak"
       );
       setError(msg);
-      toast.error(msg, TOAST_STYLE);
+      toast.error(msg, { ...TOAST_STYLE, id: IMAGE_ERROR_TOAST_ID });
       return;
     }
 
