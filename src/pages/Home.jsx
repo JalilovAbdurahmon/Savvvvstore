@@ -75,6 +75,11 @@ const Home = () => {
       .catch((err) => setError(err.response?.data?.message || t("home.errorDefault")));
   }, []);
 
+  // Jadvaldagi nisbiy "mashhurlik" chizig'i uchun eng katta miqdorni topamiz
+  const maxQuantity = data?.topProducts?.length
+    ? Math.max(...data.topProducts.map((p) => p.quantity), 1)
+    : 1;
+
   return (
     <Layout title={t("home.title")} subtitle={t("home.subtitle")}>
       {error && (
@@ -132,7 +137,7 @@ const Home = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Eng ko'p sotilgan mahsulotlar — hammasi, ichki skroll bilan */}
+          {/* Barcha mahsulotlar — eng ko'p sotilgani tepada, ichki skroll bilan */}
           <div className="card px-6 py-6">
             <div className="flex items-center justify-between mb-4">
               <p className="tag-label">{t("home.topProducts")}</p>
@@ -146,36 +151,65 @@ const Home = () => {
                   <thead className="sticky top-0 bg-cream z-10">
                     <tr className="tag-label">
                       <th className="text-left font-semibold px-4 py-2.5 w-12">#</th>
-                      <th className="text-left font-semibold px-4 py-2.5">{t("home.productName") || "Mahsulot"}</th>
+                      <th className="text-left font-semibold px-4 py-2.5">
+                        {t("home.productName", "Mahsulot")}
+                      </th>
                       <th className="text-right font-semibold px-4 py-2.5">{t("home.pcs")}</th>
                       <th className="text-right font-semibold px-4 py-2.5">{t("home.currency")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-sand">
-                    {data.topProducts.map((p, i) => (
-                      <tr key={i} className="odd:bg-paper even:bg-cream/40 hover:bg-terracotta/5 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <span
-                            className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-serif font-semibold ${
-                              i === 0
-                                ? "bg-terracotta text-paper"
-                                : i === 1
-                                ? "bg-terracotta/20 text-terracottaDark"
-                                : i === 2
-                                ? "bg-olive/20 text-olive"
-                                : "bg-sand text-muted"
-                            }`}
-                          >
-                            {i + 1}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 font-medium text-ink">{p.name}</td>
-                        <td className="px-4 py-2.5 text-right text-ink">{p.quantity}</td>
-                        <td className="px-4 py-2.5 text-right text-muted whitespace-nowrap">
-                          {p.revenue.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
+                    {data.topProducts.map((p, i) => {
+                      const barWidth = maxQuantity > 0 ? (p.quantity / maxQuantity) * 100 : 0;
+                      const noSales = p.quantity === 0;
+                      return (
+                        <tr
+                          key={i}
+                          className={`relative odd:bg-paper even:bg-cream/40 hover:bg-terracotta/5 transition-colors ${
+                            noSales ? "opacity-60" : ""
+                          }`}
+                        >
+                          <td className="px-4 py-2.5">
+                            <span
+                              className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-serif font-semibold ${
+                                noSales
+                                  ? "bg-sand text-muted"
+                                  : i === 0
+                                  ? "bg-terracotta text-paper"
+                                  : i === 1
+                                  ? "bg-terracotta/20 text-terracottaDark"
+                                  : i === 2
+                                  ? "bg-olive/20 text-olive"
+                                  : "bg-sand text-muted"
+                              }`}
+                            >
+                              {i + 1}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 font-medium text-ink">
+                            <div className="relative">
+                              <span className="relative z-10">{p.name}</span>
+                              {!noSales && (
+                                <span
+                                  className="absolute left-0 -bottom-1.5 h-[3px] rounded-full bg-terracotta/30"
+                                  style={{ width: `${Math.max(barWidth, 6)}%` }}
+                                />
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5 text-right tabular-nums text-ink">
+                            {noSales ? (
+                              <span className="text-muted text-xs">{t("home.noSalesYet", "sotilmagan")}</span>
+                            ) : (
+                              p.quantity
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-right tabular-nums text-muted whitespace-nowrap">
+                            {p.revenue > 0 ? p.revenue.toLocaleString() : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
