@@ -69,9 +69,9 @@ const Sidebar = () => {
 
     const fetchPending = async () => {
       try {
-        // MUHIM: agar backend'dagi yangi buyurtmalar yo'li boshqacha bo'lsa
-        // (masalan "/orders?status=pending"), shu yerni almashtiring
-        const res = await api.get("/orders/pending");
+        // Backend'da yangi (pending) buyurtmalar shu yo'l orqali qaytadi
+        // (routes/orders.js dagi GET "/" — status: "pending" bo'yicha filtrlangan)
+        const res = await api.get("/orders");
         const orders = Array.isArray(res.data) ? res.data : [];
         const currentIds = orders.map((o) => o._id);
 
