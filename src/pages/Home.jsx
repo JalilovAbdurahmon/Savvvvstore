@@ -4,6 +4,17 @@ import Layout from "../components/Layout.jsx";
 import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 
+const API_ORIGIN = (
+  import.meta.env.VITE_API_URL ||
+  "https://savvvvstore-backend-production.up.railway.app/api"
+).replace(/\/api\/?$/, "");
+
+// Eski nisbiy ("/uploads/..") va yangi to'liq ("https://..") rasm formatlarining ikkalasini qo'llab-quvvatlaydi
+const getImageSrc = (image) => {
+  if (!image) return null;
+  return image.startsWith("http") ? image : `${API_ORIGIN}${image}`;
+};
+
 const TONES = {
   accent: {
     border: "border-l-terracotta",
@@ -63,9 +74,47 @@ const StatCard = ({ label, value, icon, tone = "slate" }) => {
   );
 };
 
+// Rasmni kattalashtirib ko'rsatish modali — fonga yoki X ga bosilganda yopiladi
+const ImageLightbox = ({ src, alt, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] px-4 py-6"
+      onClick={onClose}
+    >
+      <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-ink flex items-center justify-center shadow-md hover:bg-sand transition-colors z-10"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M18 6L6 18M6 6l12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <img src={src} alt={alt} className="max-w-full max-h-[85vh] object-contain rounded-tag" />
+      </div>
+    </div>
+  );
+};
+
 const Home = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [viewImage, setViewImage] = useState(null); // { src, alt } | null
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -146,7 +195,7 @@ const Home = () => {
             {data.topProducts.length === 0 ? (
               <p className="text-muted text-sm py-4 text-center">{t("home.noSales")}</p>
             ) : (
-              <div className="max-h-[420px] overflow-y-auto rounded-tag border border-sand">
+              <div className="max-h-[420px] overflow-y-auto overflow-x-hidden rounded-tag border border-sand">
                 <table className="w-full text-sm border-collapse">
                   <thead className="sticky top-0 bg-cream z-10">
                     <tr className="tag-label">
@@ -162,6 +211,7 @@ const Home = () => {
                     {data.topProducts.map((p, i) => {
                       const barWidth = maxQuantity > 0 ? (p.quantity / maxQuantity) * 100 : 0;
                       const noSales = p.quantity === 0;
+                      const imgSrc = getImageSrc(p.image);
                       return (
                         <tr
                           key={i}
@@ -187,14 +237,26 @@ const Home = () => {
                             </span>
                           </td>
                           <td className="px-4 py-2.5 font-medium text-ink">
-                            <div className="relative">
-                              <span className="relative z-10">{p.name}</span>
-                              {!noSales && (
-                                <span
-                                  className="absolute left-0 -bottom-1.5 h-[3px] rounded-full bg-terracotta/30"
-                                  style={{ width: `${Math.max(barWidth, 6)}%` }}
+                            <div className="flex items-center gap-2.5">
+                              {imgSrc ? (
+                                <img
+                                  src={imgSrc}
+                                  alt={p.name}
+                                  onClick={() => setViewImage({ src: imgSrc, alt: p.name })}
+                                  className="w-9 h-9 rounded-tag object-cover border border-sand shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                                 />
+                              ) : (
+                                <div className="w-9 h-9 rounded-tag bg-sand shrink-0" />
                               )}
+                              <div className="relative min-w-0">
+                                <span className="relative z-10 truncate block">{p.name}</span>
+                                {!noSales && (
+                                  <span
+                                    className="absolute left-0 -bottom-1.5 h-[3px] rounded-full bg-terracotta/30"
+                                    style={{ width: `${Math.max(barWidth, 6)}%` }}
+                                  />
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-ink">
@@ -216,6 +278,10 @@ const Home = () => {
             )}
           </div>
         </>
+      )}
+
+      {viewImage && (
+        <ImageLightbox src={viewImage.src} alt={viewImage.alt} onClose={() => setViewImage(null)} />
       )}
     </Layout>
   );
