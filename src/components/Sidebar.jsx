@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import api from "../api/axios.js";
 
 const SEEN_KEY = "seenPendingOrderIds";
-const POLL_INTERVAL = 5000; // 5 soniyada bir marta tekshiradi, refresh shart emas
+const POLL_INTERVAL = 3000; // 3 soniyada bir marta tekshiradi, refresh shart emas
 
 const loadSeenIds = () => {
   try {
@@ -67,12 +67,17 @@ const Sidebar = () => {
       return;
     }
 
+    let isMounted = true;
+
     const fetchPending = async () => {
       try {
-        // Backend'da yangi (pending) buyurtmalar shu yo'l orqali qaytadi
-        // (routes/orders.js dagi GET "/" — status: "pending" bo'yicha filtrlangan)
+        // Backend (routes/orders.js -> GET "/") allaqachon
+        // faqat status: "pending" bo'lgan zakazlarni qaytaradi
         const res = await api.get("/orders");
         const orders = Array.isArray(res.data) ? res.data : [];
+
+        if (!isMounted) return;
+
         const currentIds = orders.map((o) => o._id);
 
         // Foydalanuvchi hozir "Yangi buyurtmalar" sahifasida bo'lsa —
@@ -89,14 +94,22 @@ const Sidebar = () => {
           (id) => !seenIdsRef.current.has(id)
         ).length;
         setPendingCount(unseenCount);
-      } catch {
-        // internet uzilishi va h.k. holatlarda jim qoladi
+      } catch (err) {
+        // Xatolikni konsolga chiqaramiz — jim qolmaydi, debug qilish osonlashadi
+        console.error(
+          "Pending buyurtmalarni olishda xatolik:",
+          err?.response?.status,
+          err?.message
+        );
       }
     };
 
     fetchPending(); // sahifa/route o'zgarganda darhol tekshiradi
     const interval = setInterval(fetchPending, POLL_INTERVAL);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [admin, location.pathname]);
 
   const navItems = [
