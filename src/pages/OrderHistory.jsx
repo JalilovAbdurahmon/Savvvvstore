@@ -370,7 +370,8 @@ const OrderHistory = () => {
                   <div className="flex items-start justify-between pr-7">
                     <div>
                       <p className="text-sm font-semibold text-ink">
-                        {o.firstName || t("orderHistory.customer")}
+                        {o.firstName || t("orderHistory.customer")}{" "}
+                        {o.username ? `(@${o.username})` : ""}
                       </p>
                       {o.phone && (
                         <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted">
