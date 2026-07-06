@@ -29,6 +29,9 @@ const TOAST_STYLE = {
 
 const DELETE_TOAST_ID = "product-delete-toast";
 const IMAGE_ERROR_TOAST_ID = "product-image-error-toast";
+// Update toast uchun ham barqaror id — bir necha marta ketma-ket update qilinsa,
+// har safar yangi toast to'planib qolmasdan, mavjudi shu id bilan almashtiriladi
+const UPDATE_TOAST_ID = "product-update-toast";
 
 // Fullscreen image lightbox. Strelkalar "fixed" bo'lib ekranning chap/o'ng
 // chetiga yopishadi (rasm o'lchamidan qat'iy nazar), overlay'ga qo'shilgan
@@ -329,12 +332,14 @@ const EditModal = ({
         headers: { "Content-Type": "multipart/form-data" },
       });
       onSaved(res.data);
+      // Bir xil id bilan chaqirilgani uchun, ketma-ket bir necha marta update
+      // qilinsa ham eski toast yangisi bilan ALMASHTIRILADI, ustma-ust to'planmaydi
       toast.success(
         t(
           "productList.toast.updateSuccess",
           "Mahsulot muvaffaqiyatli yangilandi"
         ),
-        TOAST_STYLE
+        { ...TOAST_STYLE, id: UPDATE_TOAST_ID }
       );
     } catch (err) {
       const message =
@@ -617,6 +622,9 @@ const ProductList = () => {
       .finally(() => setCategoriesLoading(false));
   }, []);
 
+  // Sahifa ochilganda avvalgi (masalan boshqa sahifadan qolib ketgan) toastlarni
+  // tozalaymiz, sahifadan chiqib ketilganda esa hozirgi ochiq toastlarni yopamiz —
+  // shu sababli update toast ham boshqa sahifaga o'tilganda avtomatik yo'qoladi
   useEffect(() => {
     toast.dismiss();
     return () => toast.dismiss();
