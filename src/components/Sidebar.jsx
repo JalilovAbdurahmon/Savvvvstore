@@ -1,8 +1,28 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
-import { useOrdersNotification } from "../context/OrdersNotificationContext.jsx";
+import api from "../api/axios.js";
+
+const SEEN_KEY = "seenPendingOrderIds";
+const POLL_INTERVAL = 5000; // 5 soniyada bir marta tekshiradi, refresh shart emas
+
+const loadSeenIds = () => {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const saveSeenIds = (idsSet) => {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify([...idsSet]));
+  } catch {
+    // localStorage ishlamasa ham ilova ishlashda davom etadi
+  }
+};
 
 // Oddiy bell (qo'ng'iroq) ikonkasi — tashqi kutubxonasiz
 const BellIcon = () => (
@@ -33,8 +53,51 @@ const BellIcon = () => (
 const Sidebar = () => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
-  const { pendingCount } = useOrdersNotification();
+
+  const [pendingCount, setPendingCount] = useState(0);
+  const seenIdsRef = useRef(loadSeenIds());
+
+  // Yangi buyurtmalarni fon rejimida tekshirib turadi — refresh shart emas.
+  // Faqat tizimga kirilgan bo'lsa ishlaydi (login sahifasida so'rov yubormaydi).
+  useEffect(() => {
+    if (!admin) {
+      setPendingCount(0);
+      return;
+    }
+
+    const fetchPending = async () => {
+      try {
+        // MUHIM: agar backend'dagi yangi buyurtmalar yo'li boshqacha bo'lsa
+        // (masalan "/orders?status=pending"), shu yerni almashtiring
+        const res = await api.get("/orders/pending");
+        const orders = Array.isArray(res.data) ? res.data : [];
+        const currentIds = orders.map((o) => o._id);
+
+        // Foydalanuvchi hozir "Yangi buyurtmalar" sahifasida bo'lsa —
+        // joriy buyurtmalarning barchasi "ko'rilgan" deb belgilanadi,
+        // shu bilan bell'dagi son 0 bo'ladi
+        if (location.pathname === "/orders/pending") {
+          seenIdsRef.current = new Set(currentIds);
+          saveSeenIds(seenIdsRef.current);
+          setPendingCount(0);
+          return;
+        }
+
+        const unseenCount = currentIds.filter(
+          (id) => !seenIdsRef.current.has(id)
+        ).length;
+        setPendingCount(unseenCount);
+      } catch {
+        // internet uzilishi va h.k. holatlarda jim qoladi
+      }
+    };
+
+    fetchPending(); // sahifa/route o'zgarganda darhol tekshiradi
+    const interval = setInterval(fetchPending, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [admin, location.pathname]);
 
   const navItems = [
     { to: "/", label: t("nav.overview"), icon: "01" },
