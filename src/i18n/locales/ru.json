@@ -38,7 +38,9 @@
     "topProducts": "Самые продаваемые товары",
     "noSales": "Продаж пока нет",
     "currency": "сум",
-    "pcs": "шт"
+    "pcs": "шт",
+    "productName": "Товар",
+    "noSalesYet": "не продано"
   },
   "addProduct": {
     "title": "Добавить товар",

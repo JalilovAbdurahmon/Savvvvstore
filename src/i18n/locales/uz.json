@@ -38,7 +38,9 @@
     "topProducts": "Eng ko'p sotilgan mahsulotlar",
     "noSales": "Hozircha sotuvlar yo'q",
     "currency": "so'm",
-    "pcs": "dona"
+    "pcs": "dona",
+    "productName": "Mahsulot",
+    "noSalesYet": "sotilmagan"
   },
   "addProduct": {
     "title": "Mahsulot qo'shish",
