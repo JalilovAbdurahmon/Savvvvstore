@@ -48,12 +48,17 @@ const TEXTS = {
     telegramOnly: "Buyurtma berish faqat Telegram ilovasi ichida ishlaydi.",
     chooseLocation: "Manzilni tasdiqlang",
     locating: "Joylashuv aniqlanmoqda...",
+    // GPS haqiqatan o'chirilgan/signal topilmagan holat uchun
     locationWarning:
       "GPS yoqilmagan bo'lishi mumkin. Iltimos, uni yoqing, aks holda joylashuvingiz noto'g'ri aniqlanishi mumkin.",
+    // Foydalanuvchi ruxsat so'ralganda "Не разрешать" bosgan holat uchun (GPS holatidan qat'i nazar)
+    locationPermissionDenied:
+      "Joylashuvga ruxsat berilmadi. Iltimos, brauzer yoki Telegram sozlamalaridan manzil aniqlash ruxsatini bering.",
     yourAddress: "Manzil",
     confirmLocation: "Bu manzilni tasdiqlash",
     pinInstructionTitle: "Manzilni ko'rsating",
-    pinInstructionSubtitle: "Xaritani suring yoki markerni bosib joyni belgilang",
+    pinInstructionSubtitle:
+      "Xaritani suring yoki markerni bosib joyni belgilang",
     back: "Orqaga",
   },
   ru: {
@@ -73,8 +78,12 @@ const TEXTS = {
     telegramOnly: "Оформление заказа доступно только внутри Telegram.",
     chooseLocation: "Подтвердите адрес",
     locating: "Определяем местоположение...",
+    // Holat: GPS haqiqatan o'chirilgan/signal topilmagan
     locationWarning:
       "Возможно, GPS выключен. Пожалуйста, включите его, иначе местоположение может определиться неверно.",
+    // Holat: foydalanuvchi ruxsat oynasida "Не разрешать" bosgan (GPS holatidan qat'i nazar)
+    locationPermissionDenied:
+      "Доступ к геолокации не разрешён. Пожалуйста, разрешите определение местоположения в настройках браузера или Telegram.",
     yourAddress: "Адрес",
     confirmLocation: "Подтвердить этот адрес",
     pinInstructionTitle: "Укажите адрес",
@@ -191,7 +200,8 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const [address, setAddress] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [locating, setLocating] = useState(true);
-  const [locationWarning, setLocationWarning] = useState(false);
+  // Ogohlantirish holati: null (muammo yo'q) | "off" (GPS o'chiq/signal yo'q) | "denied" (ruxsat berilmagan)
+  const [locationIssue, setLocationIssue] = useState(null);
 
   // Reverse-geocoding: koordinatani o'qiladigan manzil matniga aylantirish
   // (OpenStreetMap Nominatim — bepul, API key kerak emas, lekin production'da
@@ -222,21 +232,25 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const detectGps = () => {
     if (!navigator.geolocation) {
       setLocating(false);
-      setLocationWarning(true);
+      setLocationIssue("off");
       return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocationWarning(false);
+        setLocationIssue(null);
         moveTo(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
       },
-      () => {
-        // Sabab qanday bo'lishidan qat'iy nazar (ruxsat berilmagan, GPS
-        // o'chiq, signal topilmadi) — brauzerning standart xabari o'rniga
-        // o'zimizning chiroyli, tilga mos ogohlantirishimizni ko'rsatamiz
-        setLocationWarning(true);
+      (err) => {
+        // PERMISSION_DENIED (code 1) — foydalanuvchi "Не разрешать" bosgan,
+        // bu GPS yoniq/o'chiqligi bilan bog'liq emas, shuning uchun alohida xabar.
+        // POSITION_UNAVAILABLE (2) / TIMEOUT (3) — haqiqatan ham GPS/signal muammosi.
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationIssue("denied");
+        } else {
+          setLocationIssue("off");
+        }
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -339,16 +353,21 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
           </p>
         </div>
 
-        {/* GPS bo'yicha chiroyli ogohlantirish — brauzerning standart
-            "ruxsat/rad" oynasi o'rniga, o'zimizning tilga mos bannerimiz */}
-        {locationWarning && !locating && (
+        {/* Joylashuv bo'yicha ogohlantirish — sababiga qarab ikki xil matn:
+            "denied" -> foydalanuvchi ruxsat bermagan (GPS holatidan qat'i nazar),
+            "off" -> GPS haqiqatan o'chirilgan yoki signal topilmagan */}
+        {locationIssue && !locating && (
           <div
             className="absolute top-[92px] left-3 right-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-md px-4 py-3 flex items-start gap-2.5"
             style={{ zIndex: 29 }}
           >
-            <span className="text-amber-500 text-base leading-none mt-0.5">⚠️</span>
+            <span className="text-amber-500 text-base leading-none mt-0.5">
+              ⚠️
+            </span>
             <p className="text-xs text-amber-800 leading-relaxed">
-              {tr.locationWarning}
+              {locationIssue === "denied"
+                ? tr.locationPermissionDenied
+                : tr.locationWarning}
             </p>
           </div>
         )}
@@ -376,7 +395,10 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
       </div>
 
       {/* Pastdagi manzil karta — 1-2-rasmdagi uslubda: pin ikonka + manzil + koordinata + katta tugma */}
-      <div className="p-4 border-t shrink-0 bg-white relative" style={{ zIndex: 30 }}>
+      <div
+        className="p-4 border-t shrink-0 bg-white relative"
+        style={{ zIndex: 30 }}
+      >
         <div className="flex items-start gap-2.5 mb-4">
           <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
             <span className="text-blue-600 text-lg">📍</span>
@@ -576,7 +598,11 @@ export default function MiniApp() {
                     alt={p.name}
                     onClick={() =>
                       mainImg &&
-                      setPreviewImage({ images: imgList, index: 0, alt: p.name })
+                      setPreviewImage({
+                        images: imgList,
+                        index: 0,
+                        alt: p.name,
+                      })
                     }
                     className="w-full h-32 object-cover cursor-zoom-in active:opacity-80 transition-opacity"
                   />
