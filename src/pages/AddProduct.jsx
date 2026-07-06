@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Layout from "../components/Layout.jsx";
@@ -72,6 +72,110 @@ const ImageLightbox = ({ src, alt, onClose }) => {
           className="max-w-full max-h-[85vh] object-contain rounded-tag"
         />
       </div>
+    </div>
+  );
+};
+
+// Custom-styled dropdown for category selection — replaces native <select>
+// so the option list can be rounded, spaced, and match the app's palette
+const CategorySelect = ({
+  value,
+  onChange,
+  options,
+  loading,
+  emptyLabel,
+  loadingLabel,
+  getLabel,
+}) => {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const disabled = loading || options.length === 0;
+  const selected = options.find((o) => o.key === value);
+  const displayLabel = loading
+    ? loadingLabel
+    : options.length === 0
+    ? emptyLabel
+    : selected
+    ? getLabel(selected)
+    : "";
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((prev) => !prev)}
+        className={`input-field flex items-center justify-between text-left transition-colors ${
+          disabled
+            ? "cursor-not-allowed opacity-60"
+            : "cursor-pointer hover:border-terracotta/40"
+        } ${open ? "border-terracotta ring-2 ring-terracotta/15" : ""}`}
+      >
+        <span className={displayLabel ? "text-charcoal" : "text-muted"}>
+          {displayLabel}
+        </span>
+        <svg
+          className={`text-muted shrink-0 ml-2 transition-transform duration-150 ${
+            open ? "rotate-180" : ""
+          }`}
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M6 9l6 6 6-6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {open && !disabled && (
+        <div className="absolute z-20 top-[calc(100%+6px)] left-0 right-0 bg-white border border-sand rounded-tag shadow-[0_10px_32px_rgba(0,0,0,0.12)] py-1.5 max-h-64 overflow-auto animate-fadeIn">
+          {options.map((opt) => {
+            const active = opt.key === value;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  onChange(opt.key);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2.5 text-sm mx-1.5 my-0.5 rounded-tag transition-colors ${
+                  active
+                    ? "bg-terracotta text-white font-medium"
+                    : "text-charcoal hover:bg-sand/60"
+                }`}
+                style={{ width: "calc(100% - 12px)" }}
+              >
+                {getLabel(opt)}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
@@ -268,44 +372,15 @@ const AddProduct = () => {
                 <label className="tag-label block mb-2">
                   {t("addProduct.category")}
                 </label>
-                <div className="relative">
-                  <select
-                    className="input-field appearance-none pr-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    disabled={categoriesLoading || categories.length === 0}
-                    required
-                  >
-                    {categoriesLoading && (
-                      <option value="">
-                        {t("addProduct.loadingCategories")}
-                      </option>
-                    )}
-                    {!categoriesLoading && categories.length === 0 && (
-                      <option value="">{t("addProduct.noCategories")}</option>
-                    )}
-                    {categories.map((cat) => (
-                      <option key={cat.key} value={cat.key}>
-                        {categoryLabel(cat)}
-                      </option>
-                    ))}
-                  </select>
-                  <svg
-                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M6 9l6 6 6-6"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
+                <CategorySelect
+                  value={category}
+                  onChange={setCategory}
+                  options={categories}
+                  loading={categoriesLoading}
+                  emptyLabel={t("addProduct.noCategories")}
+                  loadingLabel={t("addProduct.loadingCategories")}
+                  getLabel={categoryLabel}
+                />
               </div>
             </div>
 
