@@ -51,7 +51,8 @@ const TEXTS = {
     yourAddress: "Manzil",
     confirmLocation: "Bu manzilni tasdiqlash",
     pinInstructionTitle: "Manzilni ko'rsating",
-    pinInstructionSubtitle: "Xaritani suring yoki markerni bosib joyni belgilang",
+    pinInstructionSubtitle:
+      "Xaritani suring yoki markerni bosib joyni belgilang",
     back: "Orqaga",
   },
   ru: {
@@ -342,7 +343,9 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
             className="absolute top-[92px] left-3 right-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-md px-4 py-3 flex items-start gap-2.5"
             style={{ zIndex: 29 }}
           >
-            <span className="text-amber-500 text-base leading-none mt-0.5">⚠️</span>
+            <span className="text-amber-500 text-base leading-none mt-0.5">
+              ⚠️
+            </span>
             <p className="text-xs text-amber-800 leading-relaxed">
               {tr.locationWarning}
             </p>
@@ -372,7 +375,10 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
       </div>
 
       {/* Pastdagi manzil karta — 1-2-rasmdagi uslubda: pin ikonka + manzil + koordinata + katta tugma */}
-      <div className="p-4 border-t shrink-0 bg-white relative" style={{ zIndex: 30 }}>
+      <div
+        className="p-4 border-t shrink-0 bg-white relative"
+        style={{ zIndex: 30 }}
+      >
         <div className="flex items-start gap-2.5 mb-4">
           <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
             <span className="text-blue-600 text-lg">📍</span>
@@ -572,7 +578,11 @@ export default function MiniApp() {
                     alt={p.name}
                     onClick={() =>
                       mainImg &&
-                      setPreviewImage({ images: imgList, index: 0, alt: p.name })
+                      setPreviewImage({
+                        images: imgList,
+                        index: 0,
+                        alt: p.name,
+                      })
                     }
                     className="w-full h-32 object-cover cursor-zoom-in active:opacity-80 transition-opacity"
                   />
@@ -586,6 +596,9 @@ export default function MiniApp() {
                   <p className="text-sm font-medium truncate">{p.name}</p>
                   <p className="text-sm text-gray-600">
                     {p.price.toLocaleString()} {tr.sum}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {p.sizes?.join(" · ")}
                   </p>
                   <button
                     onClick={() => setSelectingProduct(p)}
