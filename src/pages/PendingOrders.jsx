@@ -15,17 +15,24 @@ const getImageSrc = (image) => {
 };
 
 // Google Maps'ga to'g'ri o'tadigan link quradi.
+// MUHIM: aniq koordinata bor holatlarda "https://maps.google.com/?q=lat,lng" (klassik format)
+// ishlatiladi — bu format doimiy "dropped pin" qo'yadi va xaritani qanchalik
+// uzoqlashtirib/surib, boshqa joyga o'tib qaytsangiz ham marker o'sha joyda qoladi.
+// "/maps/search/?api=1&query=" formati esa bazan pinni "qidiruv natijasi" sifatida
+// ko'rsatib, zoom/pan qilinganda yo'qolib qolishi mumkin — shuning uchun faqat
+// aniq koordinata yo'q, sof matn manzil bo'lgan holatlarda ishlatiladi.
+//
 // Ustuvorlik tartibi:
-// 1) order.latitude/longitude mavjud bo'lsa — eng ishonchli, to'g'ridan-to'g'ri shundan quramiz
+// 1) order.latitude/longitude mavjud bo'lsa — eng ishonchli, klassik "q=" bilan doimiy pin
 // 2) order.address to'liq URL bo'lsa (eski buyurtmalar) — o'zini ishlatamiz
-// 3) order.address ichida "lat,lng" koordinata bo'lsa (eski "matn (link)" formatidagilar ham) — ajratib olamiz
+// 3) order.address ichida "lat,lng" koordinata bo'lsa (eski "matn (link)" formatidagilar ham) — ajratib olib, klassik "q=" bilan quramiz
 // 4) qolgan holatda — manzil matnidan Google Maps qidiruviga yo'naltiramiz
 const getMapsUrl = (order) => {
   if (
     typeof order.latitude === "number" &&
     typeof order.longitude === "number"
   ) {
-    return `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`;
+    return `https://maps.google.com/?q=${order.latitude},${order.longitude}`;
   }
 
   const address = order.address;
@@ -33,12 +40,20 @@ const getMapsUrl = (order) => {
   const trimmed = address.trim();
 
   if (/^https?:\/\//i.test(trimmed)) {
+    // Eski linkda "/maps/search/?api=1&query=lat,lng" bo'lsa ham,
+    // koordinatani ajratib olib doimiy pin beruvchi formatga o'tkazamiz
+    const urlCoordMatch = trimmed.match(
+      /query=(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/
+    );
+    if (urlCoordMatch) {
+      return `https://maps.google.com/?q=${urlCoordMatch[1]},${urlCoordMatch[2]}`;
+    }
     return trimmed;
   }
 
   const coordMatch = trimmed.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
   if (coordMatch) {
-    return `https://www.google.com/maps/search/?api=1&query=${coordMatch[1]},${coordMatch[2]}`;
+    return `https://maps.google.com/?q=${coordMatch[1]},${coordMatch[2]}`;
   }
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
