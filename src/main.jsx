@@ -10,8 +10,8 @@ import { OrdersNotificationProvider } from "./context/OrdersNotificationContext.
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <OrdersNotificationProvider>
+    <OrdersNotificationProvider>
+      <BrowserRouter>
         <AuthProvider>
           <App />
           <Toaster
@@ -29,7 +29,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             }}
           />
         </AuthProvider>
-      </OrdersNotificationProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </OrdersNotificationProvider>
   </React.StrictMode>
 );
