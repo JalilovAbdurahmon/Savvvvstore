@@ -154,7 +154,6 @@ const EditModal = ({
   const [price, setPrice] = useState(product.price);
   const [sizes, setSizes] = useState(sortSizes(product.sizes));
   const [category, setCategory] = useState(product.category || "");
-  const [description, setDescription] = useState(product.description || "");
   const [isActive, setIsActive] = useState(product.isActive);
 
   // Eski rasmlar (relative path, masalan "/uploads/xxx.jpg") — × bosilganda
@@ -190,7 +189,6 @@ const EditModal = ({
     price: String(product.price),
     sizes: sortSizes(product.sizes).join(","),
     category: product.category || "",
-    description: product.description || "",
     isActive: product.isActive,
   };
 
@@ -199,7 +197,6 @@ const EditModal = ({
     String(price) !== original.price ||
     sizes.join(",") !== original.sizes ||
     category !== original.category ||
-    description !== original.description ||
     isActive !== original.isActive ||
     newImages.length > 0 ||
     keptImages.length !== originalImages.length ||
@@ -318,7 +315,6 @@ const EditModal = ({
     formData.append("price", price);
     formData.append("sizes", JSON.stringify(sortSizes(sizes)));
     formData.append("category", category);
-    formData.append("description", description);
     formData.append("isActive", isActive);
     // Har doim yuboramiz — backend qaysi eski rasmlar qolishini shundan biladi
     formData.append("existingImages", JSON.stringify(keptImages));
@@ -442,16 +438,6 @@ const EditModal = ({
                   );
                 })}
               </div>
-            </div>
-            <div>
-              <label className="tag-label block mb-1.5">
-                {t("productList.modal.description")}
-              </label>
-              <textarea
-                className="input-field min-h-[70px] resize-none"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
             </div>
 
             <div>

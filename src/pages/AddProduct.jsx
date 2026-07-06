@@ -41,7 +41,10 @@ const ImageLightbox = ({ src, alt, onClose }) => {
       className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
       onClick={onClose}
     >
-      <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="relative max-w-full max-h-full"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
           aria-label="Close"
@@ -80,7 +83,6 @@ const AddProduct = () => {
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [description, setDescription] = useState("");
 
   // Bir nechta rasm: images[0] — asosiy rasm (ProductList cardida ko'rinadigan)
   const [images, setImages] = useState([]); // File[]
@@ -136,7 +138,10 @@ const AddProduct = () => {
 
     if (images.length + files.length > MAX_IMAGES) {
       toast.error(
-        t("addProduct.errorMaxImages", `Maksimal ${MAX_IMAGES} ta rasm yuklash mumkin`),
+        t(
+          "addProduct.errorMaxImages",
+          `Maksimal ${MAX_IMAGES} ta rasm yuklash mumkin`
+        ),
         TOAST_STYLE
       );
     }
@@ -154,7 +159,6 @@ const AddProduct = () => {
     setName("");
     setPrice("");
     setSizes([]);
-    setDescription("");
     setImages([]);
     setCategory(categories[0] || "");
   };
@@ -189,7 +193,6 @@ const AddProduct = () => {
     formData.append("price", price);
     formData.append("category", category);
     formData.append("sizes", JSON.stringify(sortSizes(sizes)));
-    formData.append("description", description);
     images.forEach((file) => formData.append("images", file)); // backend "images" kutadi
 
     setLoading(true);
@@ -292,18 +295,6 @@ const AddProduct = () => {
                 );
               })}
             </div>
-          </div>
-
-          <div>
-            <label className="tag-label block mb-2">
-              {t("addProduct.description")}
-            </label>
-            <textarea
-              className="input-field min-h-[90px] resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("addProduct.descriptionPlaceholder")}
-            />
           </div>
 
           <div>
