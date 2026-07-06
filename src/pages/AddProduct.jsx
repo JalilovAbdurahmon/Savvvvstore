@@ -38,7 +38,7 @@ const ImageLightbox = ({ src, alt, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6"
+      className="fixed inset-0 bg-black/85 flex items-center justify-center z-[60] px-4 py-6 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -88,6 +88,7 @@ const AddProduct = () => {
   const [images, setImages] = useState([]); // File[]
   const [previews, setPreviews] = useState([]); // string[] (object URL'lar)
   const [showImagePreview, setShowImagePreview] = useState(null); // index | null
+  const [isDragging, setIsDragging] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -129,9 +130,8 @@ const AddProduct = () => {
     );
   };
 
-  // Fayllar tanlanganda — mavjudlarga qo'shamiz, MAX_IMAGES tadan oshirmaymiz
-  const handleImagesChange = (e) => {
-    const files = Array.from(e.target.files || []);
+  const addFiles = (fileList) => {
+    const files = Array.from(fileList || []);
     if (files.length === 0) return;
 
     const combined = [...images, ...files].slice(0, MAX_IMAGES);
@@ -147,8 +147,20 @@ const AddProduct = () => {
     }
 
     setImages(combined);
+  };
+
+  // Fayllar tanlanganda — mavjudlarga qo'shamiz, MAX_IMAGES tadan oshirmaymiz
+  const handleImagesChange = (e) => {
+    addFiles(e.target.files);
     // input'ni tozalaymiz — shu tufayli xuddi shu faylni yana tanlash mumkin bo'ladi
     e.target.value = "";
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (images.length >= MAX_IMAGES) return;
+    addFiles(e.dataTransfer.files);
   };
 
   const removeImage = (index) => {
@@ -212,148 +224,280 @@ const AddProduct = () => {
     }
   };
 
+  const formattedPrice = price
+    ? new Intl.NumberFormat("ru-RU").format(Number(price))
+    : "";
+
   return (
     <Layout title={t("addProduct.title")} subtitle={t("addProduct.subtitle")}>
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-        <div className="card px-6 py-6 space-y-5">
-          <div>
-            <label className="tag-label block mb-2">
-              {t("addProduct.name")}
-            </label>
-            <input
-              type="text"
-              className="input-field"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("addProduct.namePlaceholder")}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="max-w-5xl">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+          {/* LEFT — main fields */}
+          <div className="lg:col-span-3 card px-6 py-6 space-y-6">
             <div>
               <label className="tag-label block mb-2">
-                {t("addProduct.price")}
+                {t("addProduct.name")}
               </label>
               <input
-                type="number"
-                min="0"
+                type="text"
                 className="input-field"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder={t("addProduct.pricePlaceholder")}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("addProduct.namePlaceholder")}
                 required
               />
             </div>
-            <div>
-              <label className="tag-label block mb-2">
-                {t("addProduct.category")}
-              </label>
-              <select
-                className="input-field"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                disabled={categoriesLoading || categories.length === 0}
-                required
-              >
-                {categoriesLoading && (
-                  <option value="">{t("addProduct.loadingCategories")}</option>
-                )}
-                {!categoriesLoading && categories.length === 0 && (
-                  <option value="">{t("addProduct.noCategories")}</option>
-                )}
-                {categories.map((cat) => (
-                  <option key={cat.key} value={cat.key}>
-                    {categoryLabel(cat)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
 
-          <div>
-            <label className="tag-label block mb-2">
-              {t("addProduct.sizes")}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {AVAILABLE_SIZES.map((size) => {
-                const active = sizes.includes(size);
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    aria-pressed={active}
-                    className={`w-14 h-11 rounded-tag border text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-terracotta text-white border-terracotta"
-                        : "bg-white text-charcoal border-sand hover:border-terracotta/50"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <label className="tag-label block mb-2">
-              {t("addProduct.image")}{" "}
-              <span className="text-muted">(1–{MAX_IMAGES} ta)</span>
-            </label>
-            <div className="flex items-center gap-3 flex-wrap">
-              {previews.map((url, idx) => (
-                <div key={idx} className="relative w-20 h-20 shrink-0">
-                  <img
-                    src={url}
-                    alt={images[idx]?.name}
-                    onClick={() => setShowImagePreview(idx)}
-                    className="w-20 h-20 object-cover rounded-tag border border-sand cursor-pointer hover:opacity-80 transition-opacity"
-                  />
-                  {idx === 0 && (
-                    <span className="absolute -top-1.5 -left-1.5 text-[9px] uppercase bg-terracotta text-white px-1.5 py-0.5 rounded-tag">
-                      {t("addProduct.mainImage")}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeImage(idx);
-                    }}
-                    aria-label="Remove image"
-                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-ink text-paper flex items-center justify-center text-xs leading-none shadow-md hover:bg-terracottaDark transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {images.length < MAX_IMAGES && (
-                <label className="btn-secondary cursor-pointer">
-                  {t("addProduct.chooseImage")}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImagesChange}
-                    className="hidden"
-                  />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="tag-label block mb-2">
+                  {t("addProduct.price")}
                 </label>
-              )}
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    className="input-field pr-14"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder={t("addProduct.pricePlaceholder")}
+                    required
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted uppercase tracking-wide pointer-events-none">
+                    UZS
+                  </span>
+                </div>
+                {formattedPrice && (
+                  <p className="mt-1.5 text-xs text-muted pl-0.5">
+                    {formattedPrice} {t("addProduct.sum", "so'm")}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="tag-label block mb-2">
+                  {t("addProduct.category")}
+                </label>
+                <select
+                  className="input-field"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  disabled={categoriesLoading || categories.length === 0}
+                  required
+                >
+                  {categoriesLoading && (
+                    <option value="">
+                      {t("addProduct.loadingCategories")}
+                    </option>
+                  )}
+                  {!categoriesLoading && categories.length === 0 && (
+                    <option value="">{t("addProduct.noCategories")}</option>
+                  )}
+                  {categories.map((cat) => (
+                    <option key={cat.key} value={cat.key}>
+                      {categoryLabel(cat)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="tag-label">{t("addProduct.sizes")}</label>
+                {sizes.length > 0 && (
+                  <span className="text-xs text-terracotta font-medium">
+                    {sizes.length} {t("addProduct.selected", "tanlandi")}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-4 gap-2.5">
+                {AVAILABLE_SIZES.map((size) => {
+                  const active = sizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      aria-pressed={active}
+                      className={`relative h-14 rounded-tag border-2 text-sm font-semibold transition-all duration-150 ${
+                        active
+                          ? "bg-terracotta text-white border-terracotta shadow-[0_4px_14px_rgba(196,90,54,0.35)] scale-[1.02]"
+                          : "bg-white text-charcoal border-sand hover:border-terracotta/50 hover:-translate-y-0.5"
+                      }`}
+                    >
+                      {size}
+                      {active && (
+                        <svg
+                          className="absolute top-1 right-1"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M20 6L9 17l-5-5"
+                            stroke="white"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-sm text-terracottaDark bg-terracotta/10 border border-terracotta/30 rounded-tag px-3 py-2.5">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full h-12 text-[15px] font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeOpacity="0.3"
+                    />
+                    <path
+                      d="M22 12a10 10 0 0 0-10-10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  {t("addProduct.loading")}
+                </span>
+              ) : (
+                t("addProduct.submit")
+              )}
+            </button>
+          </div>
+
+          {/* RIGHT — image upload, fills the space fully */}
+          <div className="lg:col-span-2 card px-5 py-6 flex flex-col h-full">
+            <div className="flex items-center justify-between mb-3">
+              <label className="tag-label">{t("addProduct.image")}</label>
+              <span className="text-xs text-muted">
+                {images.length}/{MAX_IMAGES}
+              </span>
+            </div>
+
+            {/* Dropzone */}
+            {images.length < MAX_IMAGES && (
+              <label
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={`flex flex-col items-center justify-center gap-2 rounded-tag border-2 border-dashed px-4 py-8 cursor-pointer transition-colors ${
+                  isDragging
+                    ? "border-terracotta bg-terracotta/5"
+                    : "border-sand hover:border-terracotta/40 hover:bg-sand/20"
+                }`}
+              >
+                <div className="w-11 h-11 rounded-full bg-terracotta/10 flex items-center justify-center">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-terracotta"
+                  >
+                    <path
+                      d="M12 16V4M12 4l-4 4M12 4l4 4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium text-charcoal text-center">
+                  {t("addProduct.chooseImage")}
+                </p>
+                <p className="text-xs text-muted text-center">
+                  {t("addProduct.dragHint", "yoki shu yerga tortib tashlang")}
+                </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImagesChange}
+                  className="hidden"
+                />
+              </label>
+            )}
+
+            {/* Previews */}
+            {previews.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                {previews.map((url, idx) => (
+                  <div key={idx} className="relative aspect-square group">
+                    <img
+                      src={url}
+                      alt={images[idx]?.name}
+                      onClick={() => setShowImagePreview(idx)}
+                      className="w-full h-full object-cover rounded-tag border border-sand cursor-pointer transition-transform duration-150 group-hover:scale-[1.03] group-hover:brightness-90"
+                    />
+                    {idx === 0 && (
+                      <span className="absolute -top-1.5 -left-1.5 text-[9px] uppercase font-semibold bg-terracotta text-white px-1.5 py-0.5 rounded-tag shadow-sm">
+                        {t("addProduct.mainImage")}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(idx);
+                      }}
+                      aria-label="Remove image"
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-ink text-paper flex items-center justify-center text-xs leading-none shadow-md hover:bg-terracottaDark transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {images.length === 0 && (
+              <p className="text-xs text-muted text-center mt-4">
+                {t(
+                  "addProduct.imageEmptyHint",
+                  "Birinchi rasm asosiy rasm sifatida ko'rsatiladi"
+                )}
+              </p>
+            )}
           </div>
         </div>
-
-        {error && (
-          <p className="text-sm text-terracottaDark bg-terracotta/10 border border-terracotta/30 rounded-tag px-3 py-2">
-            {error}
-          </p>
-        )}
-
-        <button type="submit" disabled={loading} className="btn-primary">
-          {loading ? t("addProduct.loading") : t("addProduct.submit")}
-        </button>
       </form>
 
       {showImagePreview !== null && previews[showImagePreview] && (
