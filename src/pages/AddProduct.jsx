@@ -224,10 +224,6 @@ const AddProduct = () => {
     }
   };
 
-  const formattedPrice = price
-    ? new Intl.NumberFormat("ru-RU").format(Number(price))
-    : "";
-
   return (
     <Layout title={t("addProduct.title")} subtitle={t("addProduct.subtitle")}>
       <form onSubmit={handleSubmit} className="max-w-5xl">
@@ -267,37 +263,49 @@ const AddProduct = () => {
                     UZS
                   </span>
                 </div>
-                {formattedPrice && (
-                  <p className="mt-1.5 text-xs text-muted pl-0.5">
-                    {formattedPrice} {t("addProduct.sum", "so'm")}
-                  </p>
-                )}
               </div>
               <div>
                 <label className="tag-label block mb-2">
                   {t("addProduct.category")}
                 </label>
-                <select
-                  className="input-field"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  disabled={categoriesLoading || categories.length === 0}
-                  required
-                >
-                  {categoriesLoading && (
-                    <option value="">
-                      {t("addProduct.loadingCategories")}
-                    </option>
-                  )}
-                  {!categoriesLoading && categories.length === 0 && (
-                    <option value="">{t("addProduct.noCategories")}</option>
-                  )}
-                  {categories.map((cat) => (
-                    <option key={cat.key} value={cat.key}>
-                      {categoryLabel(cat)}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    className="input-field appearance-none pr-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    disabled={categoriesLoading || categories.length === 0}
+                    required
+                  >
+                    {categoriesLoading && (
+                      <option value="">
+                        {t("addProduct.loadingCategories")}
+                      </option>
+                    )}
+                    {!categoriesLoading && categories.length === 0 && (
+                      <option value="">{t("addProduct.noCategories")}</option>
+                    )}
+                    {categories.map((cat) => (
+                      <option key={cat.key} value={cat.key}>
+                        {categoryLabel(cat)}
+                      </option>
+                    ))}
+                  </select>
+                  <svg
+                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M6 9l6 6 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
 
