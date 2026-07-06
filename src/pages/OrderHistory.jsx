@@ -13,7 +13,25 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  X,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// Leaflet'ning standart marker ikonkasi bundler (Vite/CRA) bilan ishlaganda
+// yo'lini topa olmay, ko'rinmay qolishi mumkin — shuning uchun qo'lda belgilaymiz.
+// (Agar PendingOrders.jsx'da ham ishga tushirilgan bo'lsa ham, bu yerda qayta
+// chaqirish zararli emas — Leaflet buni ichkarida faqat bir marta qo'llaydi.)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 const PAGE_SIZE = 4;
 
@@ -22,6 +40,84 @@ const API_ORIGIN = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 const resolveImageSrc = (img) => {
   if (!img) return null;
   return img.startsWith("http") ? img : `${API_ORIGIN}${img}`;
+};
+
+// Faqat matn manzil bor (koordinata yo'q) eski buyurtmalar uchun — tashqi
+// Google Maps qidiruviga yo'naltiramiz, chunki aniq nuqta yo'q
+const getExternalSearchUrl = (address) => {
+  if (!address) return null;
+  const trimmed = address.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    trimmed
+  )}`;
+};
+
+// Belgilangan joyni o'zimizning sahifamiz ichida (Leaflet + OpenStreetMap) ko'rsatadigan modal.
+// Bu xaritada foydalanuvchi bossa/surib-uzoqlashtirsa ham marker doim shu koordinatada qoladi,
+// chunki xaritani Google emas, biz o'zimiz boshqaramiz — hech qanday API key shart emas.
+const LocationMapModal = ({ lat, lng, addressLabel, onClose }) => {
+  const externalUrl = `https://maps.google.com/?q=${lat},${lng}`;
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-xl w-full max-w-lg overflow-hidden shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-sand">
+          <p className="text-sm font-medium text-ink truncate pr-2">
+            {addressLabel || "Belgilangan manzil"}
+          </p>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center hover:bg-sand/60 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ height: "360px", width: "100%" }}>
+          <MapContainer
+            center={[lat, lng]}
+            zoom={16}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[lat, lng]}>
+              <Popup>{addressLabel || "Buyurtma manzili"}</Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+
+        <div className="px-4 py-3 border-t border-sand flex justify-end">
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-sky-700 hover:underline"
+          >
+            Google Maps ilovasida ochish ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const ImageLightbox = ({ src, alt, onClose }) => {
@@ -79,6 +175,7 @@ const OrderHistory = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewImage, setViewImage] = useState(null);
+  const [mapOrder, setMapOrder] = useState(null);
   const { t } = useTranslation();
 
   const statusStyles = {
@@ -119,15 +216,21 @@ const OrderHistory = () => {
         })
       : "—";
 
+  // Koordinata mavjud bo'lsa — o'z sahifamizdagi doimiy-marker xaritasini ochamiz.
+  // Koordinata yo'q, faqat matn manzil bo'lgan eski buyurtmalar uchun — tashqi
+  // Google Maps qidiruviga o'tamiz (chunki aniq nuqta yo'q, marker chizib bo'lmaydi).
   const openLocation = (order) => {
+    const hasCoords =
+      typeof order.latitude === "number" && typeof order.longitude === "number";
+
+    if (hasCoords) {
+      setMapOrder(order);
+      return;
+    }
+
     if (!order.address) return;
-    window.open(
-      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        order.address
-      )}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+    const url = getExternalSearchUrl(order.address);
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const deleteOrder = async (order) => {
@@ -245,6 +348,11 @@ const OrderHistory = () => {
                 cls: "bg-sand text-ink border border-sand",
                 icon: null,
               };
+              const hasLocation =
+                (typeof o.latitude === "number" &&
+                  typeof o.longitude === "number") ||
+                Boolean(o.address);
+
               return (
                 <div
                   key={o._id}
@@ -347,7 +455,7 @@ const OrderHistory = () => {
                   <div className="pt-0.5">
                     <button
                       onClick={() => openLocation(o)}
-                      disabled={!o.address}
+                      disabled={!hasLocation}
                       className="w-full flex items-center justify-center gap-2 text-xs font-medium px-3 py-2 rounded-lg border border-sand bg-sand/40 text-ink hover:bg-terracottaDark hover:text-white hover:border-terracottaDark transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-sand/40 disabled:hover:text-ink"
                     >
                       <MapPin size={14} />
@@ -435,6 +543,15 @@ const OrderHistory = () => {
           src={viewImage.src}
           alt={viewImage.alt}
           onClose={() => setViewImage(null)}
+        />
+      )}
+
+      {mapOrder && (
+        <LocationMapModal
+          lat={mapOrder.latitude}
+          lng={mapOrder.longitude}
+          addressLabel={mapOrder.address}
+          onClose={() => setMapOrder(null)}
         />
       )}
     </Layout>
