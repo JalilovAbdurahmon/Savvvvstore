@@ -1,20 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Bell } from "lucide-react";
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
-import api from "../api/axios.js";
-
-const PENDING_ORDERS_PATH = "/orders/pending";
-const SEEN_COUNT_KEY = "pendingOrdersSeenCount";
-const POLL_INTERVAL_MS = 3000;
 
 const Sidebar = () => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { t, i18n } = useTranslation();
-  const [unseenCount, setUnseenCount] = useState(0);
 
   const navItems = [
     { to: "/", label: t("nav.overview"), icon: "01" },
@@ -23,47 +15,6 @@ const Sidebar = () => {
     { to: "/orders/pending", label: t("nav.pendingOrders"), icon: "04" },
     { to: "/orders/history", label: t("nav.orderHistory"), icon: "05" },
   ];
-
-  // Poll pending-orders count. If we're currently on the pending-orders page,
-  // treat everything as "seen" (baseline = current count, badge = 0).
-  // Otherwise the badge shows how many orders arrived since the last visit.
-  const checkPendingOrders = useCallback(async () => {
-    try {
-      const res = await api.get("/orders");
-      const currentCount = res.data.length;
-
-      if (location.pathname === PENDING_ORDERS_PATH) {
-        localStorage.setItem(SEEN_COUNT_KEY, String(currentCount));
-        setUnseenCount(0);
-        return;
-      }
-
-      const seenCount = Number(localStorage.getItem(SEEN_COUNT_KEY) || 0);
-      setUnseenCount(Math.max(currentCount - seenCount, 0));
-    } catch {
-      // silent — badge just skips this tick
-    }
-  }, [location.pathname]);
-
-  useEffect(() => {
-    checkPendingOrders();
-    const interval = setInterval(checkPendingOrders, POLL_INTERVAL_MS);
-
-    // Re-check immediately when the tab/window regains focus,
-    // so you don't have to wait for the next poll tick
-    const handleFocus = () => checkPendingOrders();
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") checkPendingOrders();
-    };
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [checkPendingOrders]);
 
   const handleLogout = () => {
     logout();
@@ -76,44 +27,30 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="w-64 shrink-0 bg-paper border-r border-sand min-h-screen flex flex-col">
+    <aside className="w-64 shrink-0 bg-paper border-r border-sand h-screen sticky top-0 flex flex-col overflow-y-auto">
       <div className="px-6 py-7 border-b border-sand">
         <p className="tag-label mb-1">{t("nav.adminPanel")}</p>
         <h1 className="text-2xl font-serif font-semibold text-ink leading-tight">Savvvv Store</h1>
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1">
-        {navItems.map((item) => {
-          const isPendingOrdersItem = item.to === PENDING_ORDERS_PATH;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-tag text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-terracotta/10 text-terracottaDark border border-terracotta/30"
-                    : "text-ink/70 hover:bg-sand/60 border border-transparent"
-                }`
-              }
-            >
-              <span className="text-[14px] tracking-widest text-muted font-mono">{item.icon}</span>
-              <span className="text-[16px]">{item.label}</span>
-
-              {isPendingOrdersItem && (
-                <span className="ml-auto relative flex items-center justify-center shrink-0">
-                  <Bell size={16} className={unseenCount > 0 ? "text-terracottaDark" : "text-ink/35"} />
-                  {unseenCount > 0 && (
-                    <span className="absolute -top-2 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-terracottaDark text-paper text-[10px] leading-4 text-center font-semibold">
-                      {unseenCount > 99 ? "99+" : unseenCount}
-                    </span>
-                  )}
-                </span>
-              )}
-            </NavLink>
-          );
-        })}
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-tag text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-terracotta/10 text-terracottaDark border border-terracotta/30"
+                  : "text-ink/70 hover:bg-sand/60 border border-transparent"
+              }`
+            }
+          >
+            <span className="text-[14px] tracking-widest text-muted font-mono">{item.icon}</span>
+            <span className="text-[16px]">{item.label}</span>
+          </NavLink>
+        ))}
       </nav>
 
       <div className="px-6 py-4 border-t border-sand">
