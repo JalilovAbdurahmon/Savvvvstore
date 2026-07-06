@@ -4,6 +4,21 @@ import api from "../api/axios.js";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import { CheckCircle2, AlertTriangle, MapPin, X } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// Leaflet'ning standart marker ikonkasi bundler (Vite/CRA) bilan ishlaganda
+// yo'lini topa olmay, ko'rinmay qolishi mumkin — shuning uchun qo'lda belgilaymiz
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 const API_ROOT = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
 
@@ -14,56 +29,85 @@ const getImageSrc = (image) => {
   return image.startsWith("http") ? image : `${API_ROOT}${image}`;
 };
 
-// Google Maps'ga to'g'ri o'tadigan link quradi.
-// MUHIM: aniq koordinata bor holatlarda "https://maps.google.com/?q=lat,lng" (klassik format)
-// ishlatiladi — bu format doimiy "dropped pin" qo'yadi va xaritani qanchalik
-// uzoqlashtirib/surib, boshqa joyga o'tib qaytsangiz ham marker o'sha joyda qoladi.
-// "/maps/search/?api=1&query=" formati esa bazan pinni "qidiruv natijasi" sifatida
-// ko'rsatib, zoom/pan qilinganda yo'qolib qolishi mumkin — shuning uchun faqat
-// aniq koordinata yo'q, sof matn manzil bo'lgan holatlarda ishlatiladi.
-//
-// Ustuvorlik tartibi:
-// 1) order.latitude/longitude mavjud bo'lsa — eng ishonchli, klassik "q=" bilan doimiy pin
-// 2) order.address to'liq URL bo'lsa (eski buyurtmalar) — o'zini ishlatamiz
-// 3) order.address ichida "lat,lng" koordinata bo'lsa (eski "matn (link)" formatidagilar ham) — ajratib olib, klassik "q=" bilan quramiz
-// 4) qolgan holatda — manzil matnidan Google Maps qidiruviga yo'naltiramiz
-const getMapsUrl = (order) => {
-  if (
-    typeof order.latitude === "number" &&
-    typeof order.longitude === "number"
-  ) {
-    return `https://maps.google.com/?q=${order.latitude},${order.longitude}`;
-  }
-
-  const address = order.address;
+// Faqat matn manzil bor (koordinata yo'q) eski buyurtmalar uchun — tashqi
+// Google Maps qidiruviga yo'naltiramiz, chunki aniq nuqta yo'q
+const getExternalSearchUrl = (address) => {
   if (!address) return null;
   const trimmed = address.trim();
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    // Eski linkda "/maps/search/?api=1&query=lat,lng" bo'lsa ham,
-    // koordinatani ajratib olib doimiy pin beruvchi formatga o'tkazamiz
-    const urlCoordMatch = trimmed.match(
-      /query=(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/
-    );
-    if (urlCoordMatch) {
-      return `https://maps.google.com/?q=${urlCoordMatch[1]},${urlCoordMatch[2]}`;
-    }
-    return trimmed;
-  }
-
-  const coordMatch = trimmed.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-  if (coordMatch) {
-    return `https://maps.google.com/?q=${coordMatch[1]},${coordMatch[2]}`;
-  }
-
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     trimmed
   )}`;
 };
 
+// Belgilangan joyni o'zimizning sahifamiz ichida (Leaflet + OpenStreetMap) ko'rsatadigan modal.
+// Bu xaritada foydalanuvchi bossa/surib-uzoqlashtirsa ham marker doim shu koordinatada qoladi,
+// chunki xaritani Google emas, biz o'zimiz boshqaramiz — hech qanday API key shart emas.
+const LocationMapModal = ({ lat, lng, addressLabel, onClose }) => {
+  const externalUrl = `https://maps.google.com/?q=${lat},${lng}`;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-xl w-full max-w-lg overflow-hidden shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-sand">
+          <p className="text-sm font-medium text-ink truncate pr-2">
+            {addressLabel || "Belgilangan manzil"}
+          </p>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center hover:bg-sand/60 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ height: "360px", width: "100%" }}>
+          <MapContainer
+            center={[lat, lng]}
+            zoom={16}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[lat, lng]}>
+              <Popup>{addressLabel || "Buyurtma manzili"}</Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+
+        <div className="px-4 py-3 border-t border-sand flex justify-end">
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-sky-700 hover:underline"
+          >
+            Google Maps ilovasida ochish ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
   const [previewImg, setPreviewImg] = useState(null);
-  const mapsUrl = getMapsUrl(order);
+  const [showMap, setShowMap] = useState(false);
+
+  const hasCoords =
+    typeof order.latitude === "number" && typeof order.longitude === "number";
+  const externalSearchUrl = !hasCoords
+    ? getExternalSearchUrl(order.address)
+    : null;
 
   return (
     <div className="card px-5 py-4">
@@ -88,9 +132,22 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
             📞 {order.phone}
           </span>
         )}
-        {mapsUrl && (
+
+        {/* Koordinata mavjud bo'lsa — o'z sahifamizdagi xaritani (doimiy marker bilan) ochamiz */}
+        {hasCoords && (
+          <button
+            onClick={() => setShowMap(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-tag px-2.5 py-1 hover:bg-sky-100 transition-colors"
+          >
+            <MapPin size={13} />
+            {t("pendingOrders.viewLocation")}
+          </button>
+        )}
+
+        {/* Koordinata yo'q, faqat matn manzil bor eski buyurtmalar uchun — tashqi Google Maps'ga */}
+        {!hasCoords && externalSearchUrl && (
           <a
-            href={mapsUrl}
+            href={externalSearchUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-tag px-2.5 py-1 hover:bg-sky-100 transition-colors"
@@ -179,6 +236,16 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
             />
           </div>
         </div>
+      )}
+
+      {/* Belgilangan location'ni doimiy marker bilan ko'rsatuvchi xarita modali */}
+      {showMap && hasCoords && (
+        <LocationMapModal
+          lat={order.latitude}
+          lng={order.longitude}
+          addressLabel={order.address}
+          onClose={() => setShowMap(false)}
+        />
       )}
     </div>
   );
