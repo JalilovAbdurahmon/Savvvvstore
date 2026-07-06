@@ -192,6 +192,9 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const [address, setAddress] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [locating, setLocating] = useState(true);
+  // Ruxsat berilmagan/GPS aniqlanmagan holatni kuzatish uchun — faqat shu holatda
+  // yuqoridagi kichik eslatma ko'rsatiladi, ruxsat berilsa (aniqlansa) yashiriladi
+  const [locationDenied, setLocationDenied] = useState(false);
 
   // Reverse-geocoding: koordinatani o'qiladigan manzil matniga aylantirish
   // (OpenStreetMap Nominatim — bepul, API key kerak emas, lekin production'da
@@ -222,18 +225,20 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
   const detectGps = () => {
     if (!navigator.geolocation) {
       setLocating(false);
+      setLocationDenied(true);
       return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        setLocationDenied(false);
         moveTo(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
       },
       () => {
-        // Sabab qanday bo'lishidan qat'iy nazar (ruxsat berilmagan, GPS o'chiq,
-        // signal topilmadi) — endi alohida ogohlantirish banner ko'rsatilmaydi,
-        // faqat pastdagi kichik doimiy eslatma (gpsHint) ko'rinadi.
+        // Ruxsat berilmagan, GPS o'chiq yoki signal topilmagan — barcha holatda
+        // yuqoridagi kichik eslatma ko'rsatiladi
+        setLocationDenied(true);
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -334,6 +339,9 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
           <p className="text-xs text-gray-500 mt-0.5">
             {locating ? tr.locating : tr.pinInstructionSubtitle}
           </p>
+          {!locating && locationDenied && (
+            <p className="text-[11px] text-amber-600 mt-1">{tr.gpsHint}</p>
+          )}
         </div>
 
         {/* Zoom +/- tugmalari — o'ng tomonda, karta ustida */}
@@ -376,7 +384,6 @@ const LocationPicker = ({ lang, onBack, onConfirm }) => {
                 {center.lat.toFixed(5)}, {center.lng.toFixed(5)}
               </p>
             )}
-            <p className="text-[11px] text-gray-400 mt-1">{tr.gpsHint}</p>
           </div>
         </div>
         <button
