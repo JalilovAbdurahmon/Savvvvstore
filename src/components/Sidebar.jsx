@@ -2,11 +2,39 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
+import { useOrdersNotification } from "../context/OrdersNotificationContext.jsx";
+
+// Oddiy bell (qo'ng'iroq) ikonkasi — tashqi kutubxonasiz
+const BellIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M13.73 21a2 2 0 0 1-3.46 0"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const Sidebar = () => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { pendingCount } = useOrdersNotification();
 
   const navItems = [
     { to: "/", label: t("nav.overview"), icon: "01" },
@@ -30,7 +58,9 @@ const Sidebar = () => {
     <aside className="w-64 shrink-0 bg-paper border-r border-sand h-screen sticky top-0 flex flex-col overflow-y-auto">
       <div className="px-6 py-7 border-b border-sand">
         <p className="tag-label mb-1">{t("nav.adminPanel")}</p>
-        <h1 className="text-2xl font-serif font-semibold text-ink leading-tight">Savvvv Store</h1>
+        <h1 className="text-2xl font-serif font-semibold text-ink leading-tight">
+          Savvvv Store
+        </h1>
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1">
@@ -47,8 +77,21 @@ const Sidebar = () => {
               }`
             }
           >
-            <span className="text-[14px] tracking-widest text-muted font-mono">{item.icon}</span>
-            <span className="text-[16px]">{item.label}</span>
+            <span className="text-[14px] tracking-widest text-muted font-mono">
+              {item.icon}
+            </span>
+            <span className="text-[16px] flex-1">{item.label}</span>
+
+            {item.to === "/orders/pending" && (
+              <span className="relative inline-flex items-center justify-center w-5 h-5 text-ink/50 shrink-0">
+                <BellIcon />
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-terracottaDark text-white text-[10px] font-semibold flex items-center justify-center leading-none">
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                )}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -80,7 +123,9 @@ const Sidebar = () => {
       </div>
 
       <div className="px-6 py-5 border-t border-sand">
-        <p className="text-sm text-ink/80 font-medium truncate">{admin?.username}</p>
+        <p className="text-sm text-ink/80 font-medium truncate">
+          {admin?.username}
+        </p>
         <button
           onClick={handleLogout}
           className="mt-2 text-xs tag-label hover:text-terracottaDark transition-colors"
