@@ -14,8 +14,41 @@ const getImageSrc = (image) => {
   return image.startsWith("http") ? image : `${API_ROOT}${image}`;
 };
 
+// Google Maps'ga to'g'ri o'tadigan link quradi.
+// Ustuvorlik tartibi:
+// 1) order.latitude/longitude mavjud bo'lsa — eng ishonchli, to'g'ridan-to'g'ri shundan quramiz
+// 2) order.address to'liq URL bo'lsa (eski buyurtmalar) — o'zini ishlatamiz
+// 3) order.address ichida "lat,lng" koordinata bo'lsa (eski "matn (link)" formatidagilar ham) — ajratib olamiz
+// 4) qolgan holatda — manzil matnidan Google Maps qidiruviga yo'naltiramiz
+const getMapsUrl = (order) => {
+  if (
+    typeof order.latitude === "number" &&
+    typeof order.longitude === "number"
+  ) {
+    return `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`;
+  }
+
+  const address = order.address;
+  if (!address) return null;
+  const trimmed = address.trim();
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const coordMatch = trimmed.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+  if (coordMatch) {
+    return `https://www.google.com/maps/search/?api=1&query=${coordMatch[1]},${coordMatch[2]}`;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    trimmed
+  )}`;
+};
+
 const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
   const [previewImg, setPreviewImg] = useState(null);
+  const mapsUrl = getMapsUrl(order);
 
   return (
     <div className="card px-5 py-4">
@@ -40,9 +73,9 @@ const OrderCard = ({ order, onComplete, onCancel, busy, t }) => {
             📞 {order.phone}
           </span>
         )}
-        {order.address && (
+        {mapsUrl && (
           <a
-            href={order.address}
+            href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-tag px-2.5 py-1 hover:bg-sky-100 transition-colors"
