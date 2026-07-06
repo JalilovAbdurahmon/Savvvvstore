@@ -15,6 +15,14 @@ const getImageSrc = (image) => {
   return image.startsWith("http") ? image : `${API_ORIGIN}${image}`;
 };
 
+// Mahsulotning barcha rasmlarini (1-3 ta) to'liq URL massiviga aylantiradi
+const getImageUrls = (product) => {
+  if (product.images && product.images.length > 0) {
+    return product.images.map((img) => getImageSrc(img));
+  }
+  return product.image ? [getImageSrc(product.image)] : [];
+};
+
 const TONES = {
   accent: {
     border: "border-l-terracotta",
@@ -74,21 +82,39 @@ const StatCard = ({ label, value, icon, tone = "slate" }) => {
   );
 };
 
-// Rasmni kattalashtirib ko'rsatish modali — fonga yoki X ga bosilganda yopiladi
-const ImageLightbox = ({ src, alt, onClose }) => {
+// Rasmni kattalashtirib ko'rsatish modali — bir nechta rasm bo'lsa,
+// chap/o'ng strelka tugmalari orqali (faqat shunda) o'tish mumkin
+const ImageLightbox = ({ images, initialIndex = 0, onClose }) => {
+  const [index, setIndex] = useState(initialIndex);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") setIndex((i) => (i - 1 + images.length) % images.length);
+      if (e.key === "ArrowRight") setIndex((i) => (i + 1) % images.length);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, images.length]);
+
+  const prev = () => setIndex((i) => (i - 1 + images.length) % images.length);
+  const next = () => setIndex((i) => (i + 1) % images.length);
 
   return (
-    <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] px-4 py-6"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] px-4 py-6" onClick={onClose}>
+      {images.length > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            prev();
+          }}
+          aria-label="Previous"
+          className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-lg hover:bg-white transition-colors text-xl z-10"
+        >
+          ‹
+        </button>
+      )}
+
       <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
@@ -105,8 +131,28 @@ const ImageLightbox = ({ src, alt, onClose }) => {
             />
           </svg>
         </button>
-        <img src={src} alt={alt} className="max-w-full max-h-[85vh] object-contain rounded-tag" />
+        <img src={images[index]} alt="" className="max-w-full max-h-[85vh] object-contain rounded-tag" />
+        {images.length > 1 && (
+          <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-1.5">
+            {images.map((_, i) => (
+              <span key={i} className={`w-1.5 h-1.5 rounded-full ${i === index ? "bg-white" : "bg-white/40"}`} />
+            ))}
+          </div>
+        )}
       </div>
+
+      {images.length > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            next();
+          }}
+          aria-label="Next"
+          className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-lg hover:bg-white transition-colors text-xl z-10"
+        >
+          ›
+        </button>
+      )}
     </div>
   );
 };
@@ -114,7 +160,7 @@ const ImageLightbox = ({ src, alt, onClose }) => {
 const Home = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [viewImage, setViewImage] = useState(null); // { src, alt } | null
+  const [viewGallery, setViewGallery] = useState(null); // { images: string[], index: number } | null
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -211,7 +257,8 @@ const Home = () => {
                     {data.topProducts.map((p, i) => {
                       const barWidth = maxQuantity > 0 ? (p.quantity / maxQuantity) * 100 : 0;
                       const noSales = p.quantity === 0;
-                      const imgSrc = getImageSrc(p.image);
+                      const productImages = getImageUrls(p);
+                      const imgSrc = productImages[0] || null;
                       return (
                         <tr
                           key={i}
@@ -239,12 +286,19 @@ const Home = () => {
                           <td className="px-4 py-2.5 font-medium text-ink">
                             <div className="flex items-center gap-2.5">
                               {imgSrc ? (
-                                <img
-                                  src={imgSrc}
-                                  alt={p.name}
-                                  onClick={() => setViewImage({ src: imgSrc, alt: p.name })}
-                                  className="w-9 h-9 rounded-tag object-cover border border-sand shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                                />
+                                <div className="relative shrink-0">
+                                  <img
+                                    src={imgSrc}
+                                    alt={p.name}
+                                    onClick={() => setViewGallery({ images: productImages, index: 0 })}
+                                    className="w-9 h-9 rounded-tag object-cover border border-sand cursor-pointer hover:opacity-80 transition-opacity"
+                                  />
+                                  {productImages.length > 1 && (
+                                    <span className="absolute -bottom-1 -right-1 text-[8px] bg-ink/70 text-paper px-1 rounded">
+                                      {productImages.length}
+                                    </span>
+                                  )}
+                                </div>
                               ) : (
                                 <div className="w-9 h-9 rounded-tag bg-sand shrink-0" />
                               )}
@@ -280,8 +334,12 @@ const Home = () => {
         </>
       )}
 
-      {viewImage && (
-        <ImageLightbox src={viewImage.src} alt={viewImage.alt} onClose={() => setViewImage(null)} />
+      {viewGallery && (
+        <ImageLightbox
+          images={viewGallery.images}
+          initialIndex={viewGallery.index}
+          onClose={() => setViewGallery(null)}
+        />
       )}
     </Layout>
   );
