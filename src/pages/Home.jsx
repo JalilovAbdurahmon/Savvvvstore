@@ -43,6 +43,34 @@ const TONES = {
   },
 };
 
+// Reyting bo'yicha rang sxemasi — top 3 alohida (medal), qolganlari neytral
+const RANK_STYLES = [
+  {
+    badge: "bg-gradient-to-br from-amber-400 to-amber-500 text-white",
+    bar: "bg-gradient-to-r from-amber-400 to-amber-300",
+    rowBg: "bg-amber-50/40",
+    medal: "🥇",
+  },
+  {
+    badge: "bg-gradient-to-br from-slate-300 to-slate-400 text-white",
+    bar: "bg-gradient-to-r from-slate-300 to-slate-200",
+    rowBg: "bg-slate-50/50",
+    medal: "🥈",
+  },
+  {
+    badge: "bg-gradient-to-br from-orange-400 to-orange-500 text-white",
+    bar: "bg-gradient-to-r from-orange-400 to-orange-300",
+    rowBg: "bg-orange-50/40",
+    medal: "🥉",
+  },
+  {
+    badge: "bg-sand text-muted",
+    bar: "bg-terracotta/40",
+    rowBg: "",
+    medal: null,
+  },
+];
+
 const StatCard = ({ label, value, icon, tone = "slate" }) => {
   const s = TONES[tone];
 
@@ -137,7 +165,7 @@ const Home = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Barcha mahsulotlar — eng ko'p sotilgani tepada, ichki skroll bilan */}
+          {/* Barcha mahsulotlar — reyting ko'rinishida, ranglar bilan, ichki skroll */}
           <div className="card px-6 py-6">
             <div className="flex items-center justify-between mb-4">
               <p className="tag-label">{t("home.topProducts")}</p>
@@ -146,72 +174,57 @@ const Home = () => {
             {data.topProducts.length === 0 ? (
               <p className="text-muted text-sm py-4 text-center">{t("home.noSales")}</p>
             ) : (
-              <div className="max-h-[420px] overflow-y-auto rounded-tag border border-sand">
-                <table className="w-full text-sm border-collapse">
-                  <thead className="sticky top-0 bg-cream z-10">
-                    <tr className="tag-label">
-                      <th className="text-left font-semibold px-4 py-2.5 w-12">#</th>
-                      <th className="text-left font-semibold px-4 py-2.5">
-                        {t("home.productName", "Mahsulot")}
-                      </th>
-                      <th className="text-right font-semibold px-4 py-2.5">{t("home.pcs")}</th>
-                      <th className="text-right font-semibold px-4 py-2.5">{t("home.currency")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-sand">
-                    {data.topProducts.map((p, i) => {
-                      const barWidth = maxQuantity > 0 ? (p.quantity / maxQuantity) * 100 : 0;
-                      const noSales = p.quantity === 0;
-                      return (
-                        <tr
-                          key={i}
-                          className={`relative odd:bg-paper even:bg-cream/40 hover:bg-terracotta/5 transition-colors ${
-                            noSales ? "opacity-60" : ""
-                          }`}
-                        >
-                          <td className="px-4 py-2.5">
-                            <span
-                              className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-serif font-semibold ${
-                                noSales
-                                  ? "bg-sand text-muted"
-                                  : i === 0
-                                  ? "bg-terracotta text-paper"
-                                  : i === 1
-                                  ? "bg-terracotta/20 text-terracottaDark"
-                                  : i === 2
-                                  ? "bg-olive/20 text-olive"
-                                  : "bg-sand text-muted"
-                              }`}
-                            >
-                              {i + 1}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 font-medium text-ink">
-                            <div className="relative">
-                              <span className="relative z-10">{p.name}</span>
-                              {!noSales && (
-                                <span
-                                  className="absolute left-0 -bottom-1.5 h-[3px] rounded-full bg-terracotta/30"
-                                  style={{ width: `${Math.max(barWidth, 6)}%` }}
-                                />
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-ink">
-                            {noSales ? (
-                              <span className="text-muted text-xs">{t("home.noSalesYet", "sotilmagan")}</span>
-                            ) : (
-                              p.quantity
-                            )}
-                          </td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-muted whitespace-nowrap">
-                            {p.revenue > 0 ? p.revenue.toLocaleString() : "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="max-h-[440px] overflow-y-auto pr-1 space-y-2">
+                {data.topProducts.map((p, i) => {
+                  const barWidth = maxQuantity > 0 ? Math.max((p.quantity / maxQuantity) * 100, 4) : 0;
+                  const noSales = p.quantity === 0;
+                  const rankStyle = RANK_STYLES[i] || RANK_STYLES[3];
+
+                  return (
+                    <div
+                      key={i}
+                      className={`relative flex items-center gap-3 rounded-tag border border-sand/70 px-3 py-2.5 overflow-hidden transition-transform hover:scale-[1.01] ${
+                        noSales ? "opacity-55" : "bg-paper"
+                      } ${i < 3 && !noSales ? rankStyle.rowBg : ""}`}
+                    >
+                      {/* Fon bar — nisbiy sotuv miqdorini rang bilan ko'rsatadi */}
+                      {!noSales && (
+                        <div
+                          className={`absolute inset-y-0 left-0 ${rankStyle.bar} opacity-25`}
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      )}
+
+                      {/* Reyting belgisi */}
+                      <span
+                        className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full text-sm font-serif font-semibold shrink-0 shadow-sm ${
+                          noSales ? "bg-sand text-muted" : rankStyle.badge
+                        }`}
+                      >
+                        {!noSales && rankStyle.medal ? rankStyle.medal : i + 1}
+                      </span>
+
+                      {/* Nomi */}
+                      <span className="relative z-10 font-medium text-ink flex-1 min-w-0 truncate">{p.name}</span>
+
+                      {/* Miqdor va summa */}
+                      <div className="relative z-10 text-right shrink-0">
+                        {noSales ? (
+                          <span className="text-muted text-xs">{t("home.noSalesYet", "sotilmagan")}</span>
+                        ) : (
+                          <>
+                            <p className="text-sm font-semibold text-ink tabular-nums">
+                              {p.quantity} <span className="text-xs font-normal text-muted">{t("home.pcs")}</span>
+                            </p>
+                            <p className="text-xs text-muted tabular-nums">
+                              {p.revenue.toLocaleString()} {t("home.currency")}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
